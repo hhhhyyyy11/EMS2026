@@ -14,10 +14,25 @@ Thumbs.db
 **/.claude/
 **/.idea/
 **/.vscode/
-
-# Large archives (optional but recommended)
-*.zip
-*.tar.gz
 *.bak
+
+# Large datasets (Ignore all Excel and CSV, whitelist only light samples)
+*.xlsx
+*.csv
+!Data/sample_energy_data.csv
+
+# Word and PDF documents
+*.docx
+*.pdf
+
+# Dynamic/Rolling Results and Plots
+**/results/
+**/png/
+
+# LaTeX build artifacts
+*.aux
+*.fls
+*.synctex.gz
+*.out
 
 
