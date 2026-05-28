@@ -1,0 +1,17 @@
+{
+  "price_plan": "fixed_price",
+  "fixed_price_yen_per_kWh": 21.51,
+  "battery": {
+    "capacity_kWh": 860.0,
+    "charge_limit_kW": 400.0,
+    "discharge_limit_kW": 400.0,
+    "charge_efficiency": 0.98,
+    "discharge_efficiency": 0.98,
+    "initial_soc_ratio": 0.5
+  },
+  "data_paths": {
+    "energy_excel": "Data/common_energy_data.xlsx",
+    "spot_price_2023": "Data/spot_summary_2023.csv",
+    "spot_price_2024": "Data/spot_summary_2024.csv"
+  }
+}

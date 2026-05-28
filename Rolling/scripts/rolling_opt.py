@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import argparse
 import os
 import unicodedata
@@ -12,94 +13,39 @@ import logging
 import sys
 from typing import Optional
 
+# Sharedモジュールのインポート設定
+sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from Shared import data_loader
+
 
 def read_spot_price_data(path='spot_summary_2024.csv', path_2023='spot_summary_2023.csv'):
     """
     JEPXスポット価格データを読み込み、30分間隔の価格データに変換
-    2024年の完全なデータを得るため、2023年度と2024年度のデータを組み合わせる
-    - 2024年1~3月: spot_summary_2023.csv（2024年1~3月分）
-    - 2024年4~12月: spot_summary_2024.csv（2024年4~12月分）
+    共通DataLoaderへ処理をデリゲート
     """
-    def process_spot_data(df):
-        """スポット価格データを30分間隔に展開"""
-        expanded_data = []
-        for _, row in df.iterrows():
-            date_str = row['受渡日']
-            time_code = row['時刻コード']  # 1=00:00-01:00, 2=01:00-02:00, ..., 48=23:00-24:00
-            price = row['エリアプライス北海道(円/kWh)']
-
-            # 時刻コードから開始時刻を計算
-            if time_code <= 47:
-                start_hour = time_code - 1
-                base_date = pd.to_datetime(date_str)
-            else:
-                start_hour = 23
-                base_date = pd.to_datetime(date_str)
-
-            # 30分間隔で2つのデータポイントを作成（00分と30分）
-            for minute in [0, 30]:
-                timestamp = base_date + pd.Timedelta(hours=start_hour, minutes=minute)
-                expanded_data.append({
-                    'datetime': timestamp,
-                    'price_yen_per_kWh': price
-                })
-        return expanded_data
-
-    # 2024年度データを読み込み
-    df_2024 = pd.read_csv(path, encoding='shift_jis')
-    expanded_2024 = process_spot_data(df_2024)
-
-    # 2023年度データを読み込み（2024年1~3月をカバー）
-    try:
-        df_2023 = pd.read_csv(path_2023, encoding='shift_jis')
-        expanded_2023 = process_spot_data(df_2023)
-        # 両方を結合
-        all_data = expanded_2023 + expanded_2024
-    except Exception as e:
-        print(f'Warning: Could not load 2023 data ({e}), using 2024 data only')
-        all_data = expanded_2024
-
-    price_df = pd.DataFrame(all_data)
-    # 重複を除去（同じ時刻の重複データがある場合）
-    price_df = price_df.drop_duplicates(subset=['datetime'])
-    price_df.set_index('datetime', inplace=True)
-    price_df.sort_index(inplace=True)
-    # インデックスの重複も除去（最初のものを保持）
-    price_df = price_df[~price_df.index.duplicated(keep='first')]
-
-    return price_df
+    if not os.path.exists(path) and os.path.exists(os.path.join('Data', os.path.basename(path))):
+        path = os.path.join('Data', os.path.basename(path))
+    if not os.path.exists(path_2023) and os.path.exists(os.path.join('Data', os.path.basename(path_2023))):
+        path_2023 = os.path.join('Data', os.path.basename(path_2023))
+        
+    return data_loader.read_jepx_prices(path_2023, path)
 
 
 def read_sample_excel(path, sheet_name='30分値'):
-    path = unicodedata.normalize('NFC', path)
-    xls = pd.ExcelFile(path)
-    df = pd.read_excel(xls, sheet_name=sheet_name, header=0)
-    # Drop rows where 消費電力量 is non-numeric (unit row etc.)
-    col = '消費電力量'
-    if col not in df.columns:
-        raise KeyError(f"Expected column '{col}' in sheet '{sheet_name}'")
-    # Remove header/unit rows: keep rows where 消費電力量 can be converted to numeric
-    df = df[df[col].apply(lambda x: is_number(x))]
-    df = df.copy()
-    # If 発電量 (PV) column exists, ensure numeric, otherwise fill with zeros
-    pv_col = '発電量'
-    if pv_col in df.columns:
-        df = df[df[pv_col].apply(lambda x: is_number(x)) | df[pv_col].isnull()]
-        df[pv_col] = pd.to_numeric(df[pv_col], errors='coerce').fillna(0.0)
-    else:
-        # create PV column with zeros to simplify downstream logic
-        df[pv_col] = 0.0
-
-    # Build datetime
-    df['datetime'] = pd.to_datetime(df['日付'].astype(str) + ' ' + df['時刻'].astype(str))
-    df.set_index('datetime', inplace=True)
-    # Ensure numeric
-    df[col] = pd.to_numeric(df[col])
-
-    # Excelの30分エネルギー[kWh] → 平均電力[kW]へ変換（Δt=0.5h なので×2）
-    df['consumption_kW'] = df[col] * 2.0
-    df['pv_kW'] = df[pv_col] * 2.0
-
+    """
+    Excelの30分値から消費電力[kW]および太陽光発電量[kW]をロード
+    共通DataLoaderへ処理をデリゲート
+    """
+    if not os.path.exists(path) and os.path.exists(os.path.join('Data', os.path.basename(path))):
+        path = os.path.join('Data', os.path.basename(path))
+        
+    df = data_loader.read_energy_data(path, sheet_name=sheet_name)
+    
+    # 既存コードとの互換性のため、元のカラム名（消費電力量、発電量など）も保持
+    df['消費電力量'] = df['consumption_kW'] / 2.0
+    df['発電量'] = df['pv_kW'] / 2.0
+    
     return df
 
 
@@ -1062,6 +1008,7 @@ def main():
     - 価格データ: JEPX 2024年データ使用
     """
     parser = argparse.ArgumentParser()
+    parser.add_argument('--config', default='config.json', help='Path to config.json')
     parser.add_argument('--excel', default='data/20250901サンプルデータ.xlsx')
     parser.add_argument('--sheet', default='30分値')
     parser.add_argument('--bF_max', type=float, default=None, help='蓄電池全容量 [kWh]（例: 860） - 指定すると params["bF_max"] を上書き')
@@ -1085,6 +1032,28 @@ def main():
     parser.add_argument('--csv', default='results/rolling_results.csv', help='検証対象のCSVファイルパス (デフォルト: results/rolling_results.csv)')
 
     args = parser.parse_args()
+
+    # config.json の設定があればオーバーライド
+    if os.path.exists(args.config):
+        try:
+            config = data_loader.load_config(args.config)
+            print(f"Loaded config from {args.config}")
+            if 'data_paths' in config:
+                args.excel = config['data_paths']['energy_excel']
+                args.price_data = config['data_paths']['spot_price_2024']
+                args.price_data_2023 = config['data_paths']['spot_price_2023']
+            
+            if 'price_plan' in config:
+                if config['price_plan'] == 'fixed_price':
+                    args.use_fixed_price = True
+                else:
+                    args.use_fixed_price = False
+            
+            if args.bF_max is None and 'battery' in config:
+                args.bF_max = config['battery']['capacity_kWh']
+        except Exception as e:
+            print(f"Warning: Failed to load/parse config from {args.config} ({e})")
+
 
     # 検証モードの実行 (最適化を実行せずに終了)
     if args.validate or args.verify_dates or args.find_representative:

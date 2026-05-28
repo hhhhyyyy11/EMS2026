@@ -1,0 +1,24 @@
+{
+  "hokkaido_basic": {
+    "basic_charge": 0.0,
+    "energy_charge": 0.0,
+    "fuel_adjustment": 0.0,
+    "renewable_levy": 0.0,
+    "total": 0.0,
+    "peak_demand_kW": 0.0,
+    "annual_buy_kWh": 0.0
+  },
+  "message": "Fixed price mode - only Hokkaido Basic plan calculated",
+  "experiment_params": {
+    "horizon": 96,
+    "horizon_hours": 48.0,
+    "bF_max_kWh": 860.0,
+    "time_limit_per_step": 10.0,
+    "total_steps": 17520
+  },
+  "timing": {
+    "hokkaido_basic_seconds": 15.517507076263428,
+    "total_seconds": 21.247344970703125,
+    "total_minutes": 0.3541224161783854
+  }
+}
