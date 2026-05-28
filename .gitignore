@@ -34,5 +34,12 @@ Thumbs.db
 *.fls
 *.synctex.gz
 *.out
+*.dvi
+*.fdb_latexmk
+*.toc
+*.lof
+*.lot
+*.bbl
+*.blg
 
 
