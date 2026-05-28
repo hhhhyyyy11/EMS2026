@@ -39,7 +39,7 @@
 本最適化計算における数理モデルの定式化は以下の通りである．
 
 \subsection{目的関数}
-各タイムステップの電力量料金と最大買電電力に基づく基本料金の総和を最小化する．
+各ステップの電力量料金と最大買電電力に基づく基本料金の総和を最小化する．
 \begin{equation}
     \text{Minimize} \quad C_{\mathrm{total}} = w_{\mathrm{basic}} \cdot s^{\mathrm{BY}}_{\mathrm{MAX}} + \sum_{k=0}^{K-1} \left( p^{\mathrm{BY}}_{k} \cdot s^{\mathrm{BY}}_{k} \cdot \Delta t \right)
 \end{equation}
@@ -51,39 +51,39 @@
 \subsection{制約条件}
 \begin{enumerate}
     \item \textbf{電力需給バランス制約}：
-    各ステップにおいて供給と需要を一致させる．
-    \begin{equation}
-        g^{\mathrm{P2}}_{k} + s^{\mathrm{BY}}_{k} + x^{\mathrm{FD2}}_{k} = d_{k} + x^{\mathrm{FC1}}_{k}, \quad \forall k
-    \end{equation}
-    ここで，$g^{\mathrm{P2}}_{k}$ は使用PV発電量，$d_{k}$ は施設需要，$x^{\mathrm{FD2}}_{k}$ は放電出力，$x^{\mathrm{FC1}}_{k}$ は充電入力である．充放電効率 $\eta = 0.98$ に対し，実際の蓄電池内部への出入力 $x^{\mathrm{FC2}}_{k}, x^{\mathrm{FD1}}_{k}$ は以下を満たす．
-    \begin{equation}
-        x^{\mathrm{FC2}}_{k} = \eta \cdot x^{\mathrm{FC1}}_{k}, \quad x^{\mathrm{FD2}}_{k} = \eta \cdot x^{\mathrm{FD1}}_{k}
-    \end{equation}
-    
+          各ステップにおいて供給と需要を一致させる．
+          \begin{equation}
+              g^{\mathrm{P2}}_{k} + s^{\mathrm{BY}}_{k} + x^{\mathrm{FD2}}_{k} = d_{k} + x^{\mathrm{FC1}}_{k}, \quad \forall k
+          \end{equation}
+          ここで，$g^{\mathrm{P2}}_{k}$ は使用PV発電量，$d_{k}$ は施設需要，$x^{\mathrm{FD2}}_{k}$ は蓄電池の放電出力，$x^{\mathrm{FC1}}_{k}$ は蓄電池の充電入力である．充放電効率 $\eta = 0.98$ に対し，実際の蓄電池内部への出入力 $x^{\mathrm{FC2}}_{k}, x^{\mathrm{FD1}}_{k}$ は以下を満たす．
+          \begin{equation}
+              x^{\mathrm{FC2}}_{k} = \eta \cdot x^{\mathrm{FC1}}_{k}, \quad x^{\mathrm{FD2}}_{k} = \eta \cdot x^{\mathrm{FD1}}_{k}
+          \end{equation}
+
     \item \textbf{蓄電池状態遷移および容量制約}：
-    \begin{equation}
-        b^{\mathrm{F}}_{k+1} = b^{\mathrm{F}}_{k} + (x^{\mathrm{FC2}}_{k} - x^{\mathrm{FD1}}_{k}) \cdot \Delta t, \quad \forall k
-    \end{equation}
-    \begin{equation}
-        0.05 \cdot C_{\mathrm{bat}} \leq b^{\mathrm{F}}_{k} \leq 0.95 \cdot C_{\mathrm{bat}}, \quad \forall k
-    \end{equation}
-    ここで，$b^{\mathrm{F}}_{k}$ は蓄電池SOC [kWh]，$C_{\mathrm{bat}}$ は蓄電池定格容量（860.0\,kWh）である．
-    
+          \begin{equation}
+              b^{\mathrm{F}}_{k+1} = b^{\mathrm{F}}_{k} + (x^{\mathrm{FC2}}_{k} - x^{\mathrm{FD1}}_{k}) \cdot \Delta t, \quad \forall k
+          \end{equation}
+          \begin{equation}
+              0.05 \cdot C_{\mathrm{bat}} \leq b^{\mathrm{F}}_{k} \leq 0.95 \cdot C_{\mathrm{bat}}, \quad \forall k
+          \end{equation}
+          ここで，$b^{\mathrm{F}}_{k}$ は蓄電池SOC [kWh]，$C_{\mathrm{bat}}$ は蓄電池定格容量（860.0\,kWh）である．
+
     \item \textbf{充放電の排他および出力制約}：
-    充電と放電の同時発生を防ぐため，バイナリ変数 $z_{k} \in \{0, 1\}$ を用いて以下を課す．
-    \begin{equation}
-        x^{\mathrm{FC1}}_{k} \leq M \cdot z_{k}, \quad x^{\mathrm{FD1}}_{k} \leq M \cdot (1 - z_{k}), \quad \forall k
-    \end{equation}
-    ここで，$M = 10^6$ である．また，充放電出力上限 $P_{\mathrm{max}} = 400.0$\,kW に対し以下を満たす．
-    \begin{equation}
-        x^{\mathrm{FC2}}_{k} \leq P_{\mathrm{max}}, \quad x^{\mathrm{FD1}}_{k} \leq P_{\mathrm{max}}, \quad \forall k
-    \end{equation}
-    
+          充電と放電の同時発生を防ぐため，バイナリ変数 $z_{k} \in \{0, 1\}$ を用いて以下を課す．
+          \begin{equation}
+              x^{\mathrm{FC1}}_{k} \leq M \cdot z_{k}, \quad x^{\mathrm{FD1}}_{k} \leq M \cdot (1 - z_{k}), \quad \forall k
+          \end{equation}
+          ここで，$M = 10^6$ である．また，充放電出力上限 $P_{\mathrm{max}} = 400.0$\,kW に対し以下を満たす．
+          \begin{equation}
+              x^{\mathrm{FC2}}_{k} \leq P_{\mathrm{max}}, \quad x^{\mathrm{FD1}}_{k} \leq P_{\mathrm{max}}, \quad \forall k
+          \end{equation}
+
     \item \textbf{最大買電電力制限}：
-    各時刻の買電電力を最大買電電力 $s^{\mathrm{BY}}_{\mathrm{MAX}}$ 以下に制限する．
-    \begin{equation}
-        s^{\mathrm{BY}}_{k} \leq s^{\mathrm{BY}}_{\mathrm{MAX}}, \quad \forall k
-    \end{equation}
+          各時刻の買電電力を最大買電電力 $s^{\mathrm{BY}}_{\mathrm{MAX}}$ 以下に制限する．
+          \begin{equation}
+              s^{\mathrm{BY}}_{k} \leq s^{\mathrm{BY}}_{\mathrm{MAX}}, \quad \forall k
+          \end{equation}
 \end{enumerate}
 
 得られた結果を表\ref{tab:baseline_results}に示す．
@@ -94,11 +94,11 @@
     \label{tab:baseline_results}
     \begin{tabular}{lr}
         \toprule
-        評価項目          & 算出値                     \\
+        評価項目          & 算出値                   \\
         \midrule
-        年間トータル最小電力コスト & \textbf{16,169,592 円}   \\
-        最大買電電力        & \textbf{166.83 kW}      \\
-        計算時間          & \textbf{122.71 秒}       \\
+        年間トータル最小電力コスト & \textbf{16,169,592 円} \\
+        最大買電電力        & \textbf{166.83 kW}    \\
+        計算時間          & \textbf{122.71 秒}     \\
         \bottomrule
     \end{tabular}
 \end{table}
