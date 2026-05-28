@@ -9,7 +9,7 @@
 \usepackage{float}
 \usepackage{multirow}
 
-\title{EMS最適化における線形計画法(LP)と動的計画法(DP)の性能比較基盤の構築\\[0.5em]\large 今週の進捗報告}
+\title{EMS最適化における線形計画法と動的計画法の\\性能比較基盤の構築\\[0.5em]\large 今週の進捗報告}
 \author{神戸大学大学院システム情報学研究科 修士1年\\山崎博之}
 \date{2026年5月29日}
 
@@ -18,56 +18,97 @@
 \maketitle
 
 \section{研究方針の確定}
-本研究では，エネルギーマネジメントシステム（EMS）における最適化アルゴリズムの性能評価を目的とする．実務上の複雑なビジネス制約（例：翌月の基本料金の変動や複雑な基本料金算出プロセスなど）は，最適化アルゴリズムそのものの本質的な比較を困難にする要因となる．
+本研究は，太陽光発電（PV）と蓄電池を備えたエネルギーマネジメントシステム（EMS）における，電気料金最小化のための蓄電池充放電計画を対象とする．基本方針として，線形計画法（LP）と動的計画法（DP）の直接的なアルゴリズム比較に注力する方針を確定した．
 
-そのため，本研究ではこれらの複雑なビジネス制約を単純な固定定数として扱い，純粋な学術的テーマである「線形計画法（LP：連続空間・高速）」と「動的計画法（DP：離散空間・非線形への柔軟性）」の二つの代表的なアルゴリズムを真正面から比較・検証する方針を確定した．これにより，アルゴリズムの違いが解の品質や計算時間に与える影響を純粋かつ定量的に評価することにフォーカスする．
+これにより，アルゴリズムの違いが解の品質（電気料金）や計算時間に与える影響を定量的に評価・検証する．
 
 \section{今週の進捗（共通比較基盤の構築）}
-従来の研究では，LPとDPで評価時の前提条件や参照する需要・太陽光（PV）発電量データセット，料金体系が個別に実装されており，公平な性能比較が困難であった．今週は，これらの異なる手法の前提条件を「30分粒度・1年間（17,520ステップ）」のシミュレーション環境として完全に統一した．
+従来の研究では，LPとDPで評価時の前提条件や参照する需要・太陽光（PV）発電量データセット，料金体系が個別に実装されており，公平な性能比較が困難であった．今週は，これらの異なる手法の評価データを，北海道十勝地方の施設における2024年の実測データ（30分粒度・1年間，計17,520ステップ）に統一し，全く同一の条件下で両手法を公平に評価できる共通比較基盤を構築した．
 
-具体的には，以下の共通モジュールおよび設定ファイルを新設した：
+\section{線形計画法（LP）による年間一括最適化結果}
+将来の手法比較に向け，線形計画法（LP）を用いた年間一括最適化計算を実行した．
+
+本計算における主要な計算条件は以下の通りである．
 \begin{itemize}
-    \item \textbf{\texttt{data\_loader.py}}：同一の需要データ，PV発電量データ，および電気料金体系を各最適化モデルに一貫して供給する共通ローダー．
-    \item \textbf{\texttt{config.json}}：シミュレーション全体で共有される蓄電池パラメータ（容量，充放電上限，充放電効率など）や料金プランを一元管理する設定ファイル．
+    \item \textbf{対象期間とデータ}：北海道十勝地方の施設における2024年の実測データ（30分粒度・1年間，計17,520ステップ）
+    \item \textbf{最適化ソルバー}：SCIP（非同時充放電制約としてバイナリ変数を用いた混合整数線形計画問題として定式化）
+    \item \textbf{蓄電池仕様}：定格容量 860.0\,kWh（運用SOC範囲: 5\%〜95\%），最大充放電出力 400.0\,kW，片側充放電効率 0.98，初期SOC 50\%
+    \item \textbf{電気料金体系}：固定電力量単価 21.51\,円/kWh，および最大買電電力に基づく基本料金（北海道電力の高圧電力プランに基づく設定）
 \end{itemize}
-これにより，全く同一の境界条件のもとで両手法を公平に評価できる「共通比較基盤」が完成した．
 
-\section{初期計算結果（未来完全予知のベースライン）}
-共通比較基盤の有効性を検証するため，新設した環境（\texttt{config.json} の \texttt{fixed\_price} モード）を使用し，1年間（17,520ステップ）の一括最適化計算を実行した．
+本最適化計算における数理モデルの定式化は以下の通りである．
 
-本計算は，1年間の需要およびPV発電量がすべて事前に完全に予知できていると仮定した「未来完全予知（Perfect Foresight）」のLPモデルであり，いかなる予測ホライズンを伴うローリング計画法や離散化誤差を伴うDPでも超えることのできない「理論的な下限値（絶対的ベースライン）」として機能する．
+\subsection{目的関数}
+各タイムステップの電力量料金と最大買電電力に基づく基本料金の総和を最小化する．
+\begin{equation}
+    \text{Minimize} \quad C_{\mathrm{total}} = w_{\mathrm{basic}} \cdot s^{\mathrm{BY}}_{\mathrm{MAX}} + \sum_{k=0}^{K-1} \left( p^{\mathrm{BY}}_{k} \cdot s^{\mathrm{BY}}_{k} \cdot \Delta t \right)
+\end{equation}
+ここで，$K = 17,520$，$\Delta t = 0.5$\,h である．$p^{\mathrm{BY}}_{k}$ は電力量料金単価（21.51\,円/kWh），$s^{\mathrm{BY}}_{k}$ は買電電力 [kW]，$s^{\mathrm{BY}}_{\mathrm{MAX}}$ は最大買電電力 [kW] である．また，$w_{\mathrm{basic}}$ は北海道電力の高圧電力プラン（一般料金：基本料金単価 2,829.60\,円/kW，力率割引 85\%，12か月分）に基づく年間基本料金単価であり，以下のように設定される．
+\begin{equation}
+    w_{\mathrm{basic}} = 28,861.92 \quad \text{[円/kW]}
+\end{equation}
 
-最適化計算により算出された初期計算結果を表\ref{tab:baseline_results}に示す．
+\subsection{制約条件}
+\begin{enumerate}
+    \item \textbf{電力需給バランス制約}：
+    各ステップにおいて供給と需要を一致させる．
+    \begin{equation}
+        g^{\mathrm{P2}}_{k} + s^{\mathrm{BY}}_{k} + x^{\mathrm{FD2}}_{k} = d_{k} + x^{\mathrm{FC1}}_{k}, \quad \forall k
+    \end{equation}
+    ここで，$g^{\mathrm{P2}}_{k}$ は使用PV発電量，$d_{k}$ は施設需要，$x^{\mathrm{FD2}}_{k}$ は放電出力，$x^{\mathrm{FC1}}_{k}$ は充電入力である．充放電効率 $\eta = 0.98$ に対し，実際の蓄電池内部への出入力 $x^{\mathrm{FC2}}_{k}, x^{\mathrm{FD1}}_{k}$ は以下を満たす．
+    \begin{equation}
+        x^{\mathrm{FC2}}_{k} = \eta \cdot x^{\mathrm{FC1}}_{k}, \quad x^{\mathrm{FD2}}_{k} = \eta \cdot x^{\mathrm{FD1}}_{k}
+    \end{equation}
+    
+    \item \textbf{蓄電池状態遷移および容量制約}：
+    \begin{equation}
+        b^{\mathrm{F}}_{k+1} = b^{\mathrm{F}}_{k} + (x^{\mathrm{FC2}}_{k} - x^{\mathrm{FD1}}_{k}) \cdot \Delta t, \quad \forall k
+    \end{equation}
+    \begin{equation}
+        0.05 \cdot C_{\mathrm{bat}} \leq b^{\mathrm{F}}_{k} \leq 0.95 \cdot C_{\mathrm{bat}}, \quad \forall k
+    \end{equation}
+    ここで，$b^{\mathrm{F}}_{k}$ は蓄電池SOC [kWh]，$C_{\mathrm{bat}}$ は蓄電池定格容量（860.0\,kWh）である．
+    
+    \item \textbf{充放電の排他および出力制約}：
+    充電と放電の同時発生を防ぐため，バイナリ変数 $z_{k} \in \{0, 1\}$ を用いて以下を課す．
+    \begin{equation}
+        x^{\mathrm{FC1}}_{k} \leq M \cdot z_{k}, \quad x^{\mathrm{FD1}}_{k} \leq M \cdot (1 - z_{k}), \quad \forall k
+    \end{equation}
+    ここで，$M = 10^6$ である．また，充放電出力上限 $P_{\mathrm{max}} = 400.0$\,kW に対し以下を満たす．
+    \begin{equation}
+        x^{\mathrm{FC2}}_{k} \leq P_{\mathrm{max}}, \quad x^{\mathrm{FD1}}_{k} \leq P_{\mathrm{max}}, \quad \forall k
+    \end{equation}
+    
+    \item \textbf{最大買電電力制限}：
+    各時刻の買電電力を最大買電電力 $s^{\mathrm{BY}}_{\mathrm{MAX}}$ 以下に制限する．
+    \begin{equation}
+        s^{\mathrm{BY}}_{k} \leq s^{\mathrm{BY}}_{\mathrm{MAX}}, \quad \forall k
+    \end{equation}
+\end{enumerate}
+
+得られた結果を表\ref{tab:baseline_results}に示す．
 
 \begin{table}[H]
-\centering
-\caption{共通比較基盤における年間一括最適化結果（ベースライン）}
-\label{tab:baseline_results}
-\begin{tabular}{lr}
-\toprule
-評価項目 & 算出値 \\
-\midrule
-対象ステップ数 & 17,520 ステップ (365日・30分値) \\
-電気料金プラン & 固定単価モード (21.51 円/kWh) \\
-蓄電池容量 & 860.0 kWh (初期SOC 50\%) \\
-\midrule
-年間トータル最小電力コスト & \textbf{16,169,592 円} \\
-最大買電電力 & \textbf{166.83 kW} \\
-計算時間 & \textbf{122.71 秒} \\
-\bottomrule
-\end{tabular}
+    \centering
+    \caption{年間一括最適化結果}
+    \label{tab:baseline_results}
+    \begin{tabular}{lr}
+        \toprule
+        評価項目          & 算出値                     \\
+        \midrule
+        年間トータル最小電力コスト & \textbf{16,169,592 円}   \\
+        最大買電電力        & \textbf{166.83 kW}      \\
+        計算時間          & \textbf{122.71 秒}       \\
+        \bottomrule
+    \end{tabular}
 \end{table}
 
-\noindent
-年間トータル最小電力コストは \textbf{16,169,592円} となり，最大買電電力は \textbf{166.83 kW} に抑制された．
-この結果は，無駄な充放電を排除し，PV発電の自己消費を最大化しながら買電電力を抑えた理論的限界のコストを示している．今後の比較検証において，本数値が解の品質を評価する絶対的な基準値となる．
-
 \section{今後の検証計画}
-今後は，構築した共通比較基盤を活用し，以下の検証を計画している．
+今後は，統一した評価条件のもとで，以下の検証を計画している．
 \begin{enumerate}
-    \item \textbf{動的計画法（DP）の実装と適用}：状態空間および決定空間の離散化幅が，計算精度（Optimality Gap）と計算時間に与える影響の定量評価．
-    \item \textbf{ローリング計画法の適用}：予測期間の長さや予測誤差が，実際の運用コストに与える影響の評価．
-    \item \textbf{アルゴリズム間のトレードオフ評価}：同一の需要・PVデータ上でのLPとDP，およびローリング計画法の実行結果を比較し，実システム適用時における計算時間とコスト削減効果のトレードオフを定量的に評価する．
+    \item \textbf{動的計画法（DP）の実装}：状態・決定空間の離散化誤差と計算時間の評価．
+    \item \textbf{ローリング計画法の適用}：予測期間や予測誤差が運用コストに与える影響の評価．
+    \item \textbf{アルゴリズム間の比較評価}：LP，DP，およびローリング計画法の実行結果を比較し，計算時間とコスト削減効果を評価する．
 \end{enumerate}
 
 \end{document}
