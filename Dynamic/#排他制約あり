@@ -1,0 +1,47 @@
+#排他制約あり
+presolving:
+(round 1, fast)       120960 del vars, 221760 del conss, 0 add conss, 250032 chg bounds, 0 chg sides, 20160 chg coeffs, 0 upgd conss, 20160 impls, 0 clqs
+(round 2, fast)       121035 del vars, 221834 del conss, 0 add conss, 271429 chg bounds, 20139 chg sides, 40299 chg coeffs, 0 upgd conss, 20160 impls, 0 clqs
+   (2.7s) running MILP presolver
+   (3.5s) MILP presolver (5 rounds): 69 aggregations, 0 fixings, 505 bound changes
+(round 3, medium)     121104 del vars, 221834 del conss, 0 add conss, 271934 chg bounds, 20160 chg sides, 40320 chg coeffs, 0 upgd conss, 20160 impls, 0 clqs
+(round 4, fast)       121104 del vars, 221903 del conss, 0 add conss, 271934 chg bounds, 20160 chg sides, 40320 chg coeffs, 0 upgd conss, 20160 impls, 0 clqs
+(round 5, exhaustive) 121104 del vars, 221903 del conss, 0 add conss, 271934 chg bounds, 20160 chg sides, 40320 chg coeffs, 20160 upgd conss, 20160 impls, 0 clqs
+(round 6, exhaustive) 121104 del vars, 221903 del conss, 0 add conss, 271934 chg bounds, 20160 chg sides, 40320 chg coeffs, 40320 upgd conss, 40315 impls, 0 clqs
+   (17.3s) probing: 1000/20160 (5.0%) - 0 fixings, 0 aggregations, 495 implications, 999 bound changes
+   (17.3s) probing: 1001/20160 (5.0%) - 0 fixings, 0 aggregations, 497 implications, 1000 bound changes
+   (17.3s) probing aborted: 1000/1000 successive useless probings
+(round 7, exhaustive) 121104 del vars, 221903 del conss, 0 add conss, 272934 chg bounds, 20160 chg sides, 40320 chg coeffs, 40320 upgd conss, 40817 impls, 0 clqs
+(round 8, fast)       121104 del vars, 221903 del conss, 0 add conss, 272934 chg bounds, 21160 chg sides, 41320 chg coeffs, 40320 upgd conss, 40817 impls, 0 clqs
+   (18.7s) probing: 1101/20160 (5.5%) - 0 fixings, 0 aggregations, 544 implications, 1100 bound changes
+   (18.7s) probing aborted: 1000/1000 successive useless probings
+   (18.8s) symmetry computation started: requiring (bin +, int +, cont +), (fixed: bin -, int -, cont -)
+   (19.1s) no symmetry present (symcode time: 0.11)
+presolving (9 rounds: 9 fast, 5 medium, 4 exhaustive):
+ 121104 deleted vars, 221903 deleted constraints, 0 added constraints, 273034 tightened bounds, 0 added holes, 21160 changed sides, 41320 changed coefficients
+ 40864 implications, 0 cliques
+presolved problem has 120816 variables (20160 bin, 0 int, 0 impl, 100656 cont) and 80497 constraints
+  40320 constraints of type <varbound>
+  40177 constraints of type <linear>
+Presolving Time: 18.15
+
+ time | node  | left  |LP iter|LP it/n|mem/heur|mdpt |vars |cons |rows |cuts |sepa|confs|strbr|  dualbound   | primalbound  |  gap   | compl. 
+p 174s|     1 |     0 | 38147 |     - |   locks|   0 | 120k|  80k|  80k|   0 |  0 |   0 |   0 |-1.710857e+06 | 0.000000e+00 |    Inf | unknown
+  246s|     1 |     0 | 92866 |     - |  1058M |   0 | 120k|  80k|  80k|   0 |  0 |   0 |   0 |-3.861547e+04 | 0.000000e+00 |    Inf | unknown
+  266s|     1 |     0 | 93066 |     - |  1093M |   0 | 120k|  80k|  80k| 200 |  1 |   0 |   0 |-3.861547e+04 | 0.000000e+00 |    Inf | unknown
+  271s|     1 |     0 | 93266 |     - |  1101M |   0 | 120k|  80k|  80k| 400 |  2 |   0 |   0 |-3.861547e+04 | 0.000000e+00 |    Inf | unknown
+  275s|     1 |     0 | 93466 |     - |  1109M |   0 | 120k|  80k|  81k| 600 |  3 |   0 |   0 |-3.861547e+04 | 0.000000e+00 |    Inf | unknown
+  280s|     1 |     0 | 93671 |     - |  1116M |   0 | 120k|  80k|  81k| 800 |  4 |   0 |   0 |-3.860049e+04 | 0.000000e+00 |    Inf | unknown
+  284s|     1 |     0 | 93766 |     - |  1124M |   0 | 120k|  80k|  81k| 825 |  5 |   0 |   0 |-3.860049e+04 | 0.000000e+00 |    Inf | unknown
+r 285s|     1 |     0 | 93766 |     - |randroun|   0 | 120k|  80k|  81k|   0 |  5 |   0 |   0 |-3.860049e+04 |-3.860049e+04 |   0.00%| unknown
+  285s|     1 |     0 | 93766 |     - |  1124M |   0 | 120k|  80k|  81k| 825 |  5 |   0 |   0 |-3.860049e+04 |-3.860049e+04 |   0.00%| unknown
+
+SCIP Status        : problem is solved [optimal solution found]
+Solving Time (sec) : 284.59
+Solving Nodes      : 1
+Primal Bound       : -3.86004917241297e+04 (2 solutions)
+Dual Bound         : -3.86004917241297e+04
+Gap                : 0.00 %
+
+
+#排他制約なし

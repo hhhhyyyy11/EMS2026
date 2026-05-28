@@ -1,0 +1,28 @@
+#排他制約なし
+presolving:
+(round 1, fast)       120960 del vars, 221760 del conss, 0 add conss, 229872 chg bounds, 0 chg sides, 0 chg coeffs, 0 upgd conss, 0 impls, 0 clqs
+(round 2, fast)       141195 del vars, 221834 del conss, 0 add conss, 251269 chg bounds, 0 chg sides, 0 chg coeffs, 0 upgd conss, 0 impls, 0 clqs
+(round 3, fast)       141195 del vars, 221834 del conss, 0 add conss, 251269 chg bounds, 20160 chg sides, 0 chg coeffs, 0 upgd conss, 0 impls, 0 clqs
+(round 4, fast)       141285 del vars, 221834 del conss, 0 add conss, 251269 chg bounds, 20160 chg sides, 0 chg coeffs, 0 upgd conss, 0 impls, 0 clqs
+   (2.1s) running MILP presolver
+   (2.2s) MILP presolver (1 rounds): 37 aggregations, 0 fixings, 0 bound changes
+(round 5, exhaustive) 141322 del vars, 221871 del conss, 0 add conss, 251269 chg bounds, 20160 chg sides, 0 chg coeffs, 0 upgd conss, 0 impls, 0 clqs
+   (2.8s) symmetry computation started: requiring (bin +, int +, cont +), (fixed: bin -, int -, cont -)
+   (2.9s) no symmetry present (symcode time: 0.06)
+presolving (6 rounds: 6 fast, 2 medium, 2 exhaustive):
+ 141322 deleted vars, 221871 deleted constraints, 0 added constraints, 251269 tightened bounds, 0 added holes, 20160 changed sides, 0 changed coefficients
+ 0 implications, 0 cliques
+presolved problem has 80438 variables (0 bin, 0 int, 0 impl, 80438 cont) and 40209 constraints
+  40209 constraints of type <linear>
+Presolving Time: 2.23
+
+time | node  | left  |LP iter|LP it/n|mem/heur|mdpt |vars |cons |rows |cuts |sepa|confs|strbr|  dualbound   | primalbound  |  gap   | compl. 
+*65.3s|     1 |     0 | 50298 |     - |    LP  |   0 |  80k|  40k|  40k|   0 |  0 |   0 |   0 |-3.876699e+04 |-3.876699e+04 |   0.00%| unknown
+ 65.3s|     1 |     0 | 50298 |     - |   943M |   0 |  80k|  40k|  40k|   0 |  0 |   0 |   0 |-3.876699e+04 |-3.876699e+04 |   0.00%| unknown
+
+SCIP Status        : problem is solved [optimal solution found]
+Solving Time (sec) : 65.28
+Solving Nodes      : 1
+Primal Bound       : -3.87669917241297e+04 (1 solutions)
+Dual Bound         : -3.87669917241297e+04
+Gap                : 0.00 %

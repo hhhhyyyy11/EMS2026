@@ -1,0 +1,23 @@
+.DS_Store
+Thumbs.db
+*.log
+~$*.xlsx
+
+# Python Virtual Environments
+**/venv/
+**/.venv/
+**/.venv*/
+**/__pycache__/
+*.pyc
+
+# IDEs and other tools
+**/.claude/
+**/.idea/
+**/.vscode/
+
+# Large archives (optional but recommended)
+*.zip
+*.tar.gz
+*.bak
+
+

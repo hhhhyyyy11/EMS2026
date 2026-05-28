@@ -1,0 +1,154 @@
+PWD /Users/tmat/Library/CloudStorage/OneDrive-å¯Œå±±çœŒç«‹å¤§å­¦/research/food-techno/resume
+INPUT /usr/local/texlive/2024/texmf.cnf
+INPUT /usr/local/texlive/2024/texmf-dist/web2c/texmf.cnf
+INPUT /usr/local/texlive/2024/texmf.cnf
+INPUT /usr/local/texlive/2024/texmf-dist/web2c/texmf.cnf
+INPUT /usr/local/texlive/2024/texmf-var/web2c/euptex/platex.fmt
+INPUT /Users/tmat/Library/CloudStorage/OneDrive-ÉÙ»³¸©Î©Âç³Ø/research/food-techno/resume/resume2025-02-06.tex
+OUTPUT resume2025-02-06.log
+INPUT /usr/local/texlive/2024/texmf-dist/tex/platex/base/jarticle.cls
+INPUT /usr/local/texlive/2024/texmf-dist/tex/platex/base/jarticle.cls
+INPUT /usr/local/texlive/2024/texmf-dist/tex/platex/base/jsize10.clo
+INPUT /usr/local/texlive/2024/texmf-dist/tex/platex/base/jsize10.clo
+INPUT /usr/local/texlive/2024/texmf-dist/tex/platex/base/jsize10.clo
+INPUT ./tam.sty
+INPUT tam.sty
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/base/fleqn.sty
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/base/fleqn.sty
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/base/fleqn.clo
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/base/fleqn.clo
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/base/fleqn.clo
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/tools/bm.sty
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/tools/bm.sty
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/graphics/graphicx.sty
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/graphics/graphicx.sty
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/graphics/graphics.sty
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/graphics/keyval.sty
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/graphics/keyval.sty
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/graphics/graphics.sty
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/graphics/trig.sty
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/graphics/trig.sty
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/graphics-cfg/graphics.cfg
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/graphics-cfg/graphics.cfg
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/graphics-cfg/graphics.cfg
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/graphics-def/dvipdfmx.def
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/graphics-def/dvipdfmx.def
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/graphics-def/dvipdfmx.def
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/graphics/color.sty
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/graphics/color.sty
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/graphics-cfg/color.cfg
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/graphics-cfg/color.cfg
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/graphics-cfg/color.cfg
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/graphics/dvipsnam.def
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/graphics/dvipsnam.def
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/graphics/dvipsnam.def
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/graphics/mathcolor.ltx
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/graphics/mathcolor.ltx
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/graphics/mathcolor.ltx
+INPUT ./colordef.sty
+INPUT colordef.sty
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/amsfonts/amssymb.sty
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/amsfonts/amssymb.sty
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/amsfonts/amsfonts.sty
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/amsfonts/amsfonts.sty
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/l3backend/l3backend-dvips.def
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/l3backend/l3backend-dvips.def
+INPUT ./resume2025-02-06.aux
+INPUT ./resume2025-02-06.aux
+INPUT resume2025-02-06.aux
+OUTPUT resume2025-02-06.aux
+INPUT /usr/local/texlive/2024/texmf-dist/fonts/map/fontname/texfonts.map
+INPUT /usr/local/texlive/2024/texmf-dist/fonts/tfm/public/cm/cmr12.tfm
+INPUT /usr/local/texlive/2024/texmf-dist/fonts/tfm/public/cm/cmbx12.tfm
+INPUT ./tecseed.pdf
+INPUT ./tecseed.pdf
+INPUT ./tecseed.pdf
+INPUT extractbb -B cropbox -O tecseed.pdf
+INPUT /usr/local/texlive/2024/texmf-dist/fonts/tfm/public/cm/cmbx10.tfm
+INPUT /usr/local/texlive/2024/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm
+INPUT /usr/local/texlive/2024/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm
+INPUT /usr/local/texlive/2024/texmf-dist/fonts/tfm/public/cm/cmbx7.tfm
+INPUT /usr/local/texlive/2024/texmf-dist/fonts/tfm/public/cm/cmbx5.tfm
+INPUT /usr/local/texlive/2024/texmf-dist/fonts/tfm/public/cm/cmmib10.tfm
+INPUT /usr/local/texlive/2024/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmmib7.tfm
+INPUT /usr/local/texlive/2024/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmmib5.tfm
+INPUT /usr/local/texlive/2024/texmf-dist/fonts/tfm/public/cm/cmbsy10.tfm
+INPUT /usr/local/texlive/2024/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmbsy7.tfm
+INPUT /usr/local/texlive/2024/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmbsy5.tfm
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/amsfonts/umsa.fd
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/amsfonts/umsa.fd
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/amsfonts/umsa.fd
+INPUT /usr/local/texlive/2024/texmf-dist/fonts/tfm/public/amsfonts/symbols/msam10.tfm
+INPUT /usr/local/texlive/2024/texmf-dist/fonts/tfm/public/amsfonts/symbols/msam7.tfm
+INPUT /usr/local/texlive/2024/texmf-dist/fonts/tfm/public/amsfonts/symbols/msam5.tfm
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/amsfonts/umsb.fd
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/amsfonts/umsb.fd
+INPUT /usr/local/texlive/2024/texmf-dist/tex/latex/amsfonts/umsb.fd
+INPUT /usr/local/texlive/2024/texmf-dist/fonts/tfm/public/amsfonts/symbols/msbm10.tfm
+INPUT /usr/local/texlive/2024/texmf-dist/fonts/tfm/public/amsfonts/symbols/msbm7.tfm
+INPUT /usr/local/texlive/2024/texmf-dist/fonts/tfm/public/amsfonts/symbols/msbm5.tfm
+OUTPUT resume2025-02-06.dvi
+INPUT ./bus_pf.pdf
+INPUT ./bus_pf.pdf
+INPUT ./bus_pf.pdf
+INPUT extractbb -B cropbox -O bus_pf.pdf
+INPUT ./piecewise_linear.pdf
+INPUT ./piecewise_linear.pdf
+INPUT ./piecewise_linear.pdf
+INPUT extractbb -B cropbox -O piecewise_linear.pdf
+INPUT ../png/gP1.png
+INPUT ../png/gP1.png
+INPUT ../png/gP1.png
+INPUT extractbb -B cropbox -O ../png/gP1.png
+INPUT ../png/dA2.png
+INPUT ../png/dA2.png
+INPUT ../png/dA2.png
+INPUT extractbb -B cropbox -O ../png/dA2.png
+INPUT ../png/dB2.png
+INPUT ../png/dB2.png
+INPUT ../png/dB2.png
+INPUT extractbb -B cropbox -O ../png/dB2.png
+INPUT ../png/dC2.png
+INPUT ../png/dC2.png
+INPUT ../png/dC2.png
+INPUT extractbb -B cropbox -O ../png/dC2.png
+INPUT ../png/s.png
+INPUT ../png/s.png
+INPUT ../png/s.png
+INPUT extractbb -B cropbox -O ../png/s.png
+INPUT ../png/bF.png
+INPUT ../png/bF.png
+INPUT ../png/bF.png
+INPUT extractbb -B cropbox -O ../png/bF.png
+INPUT ../png/s.png
+INPUT ../png/s.png
+INPUT ../png/s.png
+INPUT ../png/s_actual.png
+INPUT ../png/s_actual.png
+INPUT ../png/s_actual.png
+INPUT extractbb -B cropbox -O ../png/s_actual.png
+INPUT ../png/xFD1_xFC2.png
+INPUT ../png/xFD1_xFC2.png
+INPUT ../png/xFD1_xFC2.png
+INPUT extractbb -B cropbox -O ../png/xFD1_xFC2.png
+INPUT ../png/xFD1_xFC2_actual.png
+INPUT ../png/xFD1_xFC2_actual.png
+INPUT ../png/xFD1_xFC2_actual.png
+INPUT extractbb -B cropbox -O ../png/xFD1_xFC2_actual.png
+INPUT ./figure/efficiency-scatter.png
+INPUT ./figure/efficiency-scatter.png
+INPUT ./figure/efficiency-scatter.png
+INPUT extractbb -B cropbox -O figure/efficiency-scatter.png
+INPUT ./figure/efficiency-line.png
+INPUT ./figure/efficiency-line.png
+INPUT ./figure/efficiency-line.png
+INPUT extractbb -B cropbox -O figure/efficiency-line.png
+INPUT ./figure/PCS_IO1.png
+INPUT ./figure/PCS_IO1.png
+INPUT ./figure/PCS_IO1.png
+INPUT extractbb -B cropbox -O figure/PCS_IO1.png
+INPUT ./figure/PCS_IO2.png
+INPUT ./figure/PCS_IO2.png
+INPUT ./figure/PCS_IO2.png
+INPUT extractbb -B cropbox -O figure/PCS_IO2.png
+INPUT resume2025-02-06.aux

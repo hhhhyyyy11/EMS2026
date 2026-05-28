@@ -1,0 +1,109 @@
+\documentclass[12pt]{jreport}
+\usepackage[dvipdfmx]{graphicx}
+\usepackage{fancybox}
+\usepackage{ascmac}
+\usepackage{amsmath}
+\usepackage{array,arydshln}
+\usepackage{url}
+\usepackage{comment}
+\usepackage{amssymb}
+\usepackage{multirow}
+\usepackage{url}
+
+\def\figurename{Figure}
+\def\tablename{Table}
+\def\bibname{参考文献}
+
+\setlength{\topmargin}{-1.0cm}
+\setlength{\oddsidemargin}{1.0cm}
+\setlength{\evensidemargin}{1.0mm}
+\setlength{\textwidth}{15cm}
+\setlength{\textheight}{23cm}
+\setcounter{topnumber}{5}%    ページ上部の図表は 5 個まで
+\def\topfraction{1.00}%       ページの上 1.00 まで図表で占めて可
+\setcounter{bottomnumber}{5}% ページ下部の図表は 5 個まで
+\def\bottomfraction{1.00}%    ページの下 1.00 まで図表で占めて可
+\setcounter{totalnumber}{10}% ページあたりの図表は 10 個まで
+\def\textfraction{0.0}%      ページうち本文が占める割合の下限
+\def\floatpagefraction{0.7}%  図表だけのページは少なくともこれだけを図表が占める
+
+\newcommand{\IB}{$\bullet$}
+\newcommand{\IC}{$\circ$}
+\newcommand{\IS}{$\ast$}
+
+
+\begin{document}%ドキュメントの始まり
+\baselineskip=0.8cm%タイトルの行間隔
+%\input{cover.tex}%外タイトル
+\input{source/title.tex}%内タイトル
+
+%% 著者近影
+
+\vspace*{15cm}
+\begin{flushleft}
+\hspace*{-9mm}
+\includegraphics[height=6cm]{fig/okumura.jpg}
+\end{flushleft}
+\vspace*{-4mm}
+\hspace*{-8mm}
+Copyright \copyright \, 2026, Yuma Okumura
+\newpage
+
+
+\baselineskip=0.75cm%要旨の行間隔
+
+% 英文要旨
+\thispagestyle{empty} %英文要旨ページ番号なし
+\input{source/abste.tex}
+
+% 和文要旨
+
+\thispagestyle{empty} %和文要旨ページ番号なし
+\input{source/abstj.tex}
+
+
+% 目次
+%\baselineskip=0.7cm%%%%目次の間隔狭い時ON
+\baselineskip=0.9cm%%%%%目次の行間隔
+\pagenumbering{roman}%%%目次のページ番号roman
+\tableofcontents%%%%%%%%目次
+\newpage%%%%%%%%%%%%%%%%改ページ
+
+% 本文
+\baselineskip=0.7cm%%%%%本文の行間隔
+\pagenumbering{arabic}%%本文のページ番号arabic
+\setcounter{page}{1}%%%%本文のページ1から開始
+
+% 序論
+\input{source/1.tex}
+
+% 
+\input{source/2.tex}
+
+%モデル
+\input{source/3.tex}
+
+%最適化
+\input{source/4.tex}
+
+%計算例
+\input{source/5.tex}
+
+%まとめ
+\input{source/6.tex}
+
+\newpage
+
+%謝辞
+\input{source/thanksto.tex}%%%%謝辞
+
+%参考文献
+\input{source/reference.tex}%%%参考文献
+\begin{appendix}
+%付録
+\input{source/add.tex}
+\end{appendix}
+
+
+
+\end{document}

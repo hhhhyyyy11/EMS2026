@@ -1,0 +1,328 @@
+\documentclass[a4paper,11pt,dvipdfmx]{jsarticle}
+
+\usepackage[top=20mm, bottom=25mm, left=20mm, right=20mm]{geometry}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{multirow}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning}
+
+\title{ローリング計画法を用いたPV・蓄電池システムの\\運用最適化と電気料金削減効果\\[0.5em]\large}
+\author{神戸大学工学部情報知能工学科4年\\山崎博之}
+\date{2026年1月13日}
+
+\begin{document}
+
+\maketitle
+
+\section{研究概要}
+
+本研究では，北海道十勝地方に設置された出力250kWの太陽光発電（PV）・蓄電池システムを対象に，ローリング計画法を用いた年間電気料金の最小化について検討した．シミュレーションには2024年の実測データ（30分間隔，17,520ステップ）を用い，北海道電力基本プランと市場価格連動プランの2種類の料金体系を比較した．
+
+\section{システム構成と制約条件}
+
+\subsection{対象システムの概要}
+
+本研究では，2024年1月1日から同年12月31日までの365日間（2月29日を除く17,520ステップ，30分時間解像度）を対象期間とし，以下の仕様を持つシステムについてシミュレーションを行った．
+
+\begin{itemize}
+    \item \textbf{太陽光発電（PV）システム}：定格出力は250kWであり，パネルは南向き，設置角度40°で固定されている．
+    \item \textbf{蓄電池システム}：本研究では蓄電池容量を0kWhから1720kWhの範囲で変化させて経済性を比較するが，基準容量として860kWh（430kWh$\times$2基）を用いる．最大充放電出力は400kWである．初期SOC（State of Charge：蓄電池の充電残量を0〜100\%で表す指標）は容量の50\%とし，充放電効率はいずれも0.98（リチウムイオン電池の一般的な値）と設定した．
+    \item \textbf{系統電力}：買電単価は市場価格連動（JEPX）または固定料金を適用する．基本料金単価は北海道電力の高圧電力料金（2,829.60円/kW）に基づき，力率割引（85\%）を考慮した値を採用した．なお，本システムは完全自家消費型であり，逆潮流は行わない設定とした．
+\end{itemize}
+
+システム構成の概念図を図\ref{fig:system_config}に示す．
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=1.5cm,
+    block/.style={rectangle, draw, minimum width=2.5cm, minimum height=1cm, align=center},
+    arrow/.style={->, thick},
+    darrow/.style={<->, thick}
+]
+% ノード定義
+\node[block] (grid) {電力系統\\（北電/JEPX）};
+\node[block, right=2.5cm of grid] (load) {施設負荷\\（需要）};
+\node[block, above=1.2cm of load] (pv) {太陽光発電\\（PV: 250kW）};
+\node[block, below=1.2cm of load] (battery) {蓄電池\\（860kWh）};
+
+% 矢印
+\draw[arrow] (grid) -- node[above] {$s^{\mathrm{BY}}_k$} node[below] {買電} (load);
+\draw[arrow] (pv) -- node[right] {$g^{\mathrm{P2}}_k$} (load);
+\draw[darrow] (battery) -- node[right] {$x^{\mathrm{FC}}_k / x^{\mathrm{FD}}_k$} node[left] {充放電} (load);
+
+% 注釈
+\node[below=0.3cm of battery, text width=3cm, align=center, font=\small] {SOC: $b^{\mathrm{F}}_k$};
+\end{tikzpicture}
+\caption{システム構成の概念図．電力系統からの買電，PV発電，蓄電池の充放電により施設需要を満たす．}
+\label{fig:system_config}
+\end{figure}
+
+\subsection{運用制約条件}
+
+システム運用における最適化計算では，以下の物理的および制度的制約を課した．
+
+\begin{itemize}
+    \item \textbf{電力需給平衡}：各タイムステップにおいて，供給電力（PV発電，買電，蓄電池放電）の総和は，需要電力（施設需要，蓄電池充電）の総和と常に一致しなければならない．
+    \item \textbf{蓄電池運用制約}：蓄電池の劣化抑制および安全性を考慮し，SOCの運用範囲は定格容量の5\%から95\%に制限した（容量860kWhの場合，43kWh以上817kWh以下）．また，充放電電力は最大出力（400kW）以下とし，充電と放電の同時実行を禁止する排他制御も行う．
+    \item \textbf{逆潮流禁止制約}：PV発電の余剰電力が生じた場合でも，売電量は常に0とし，システム内で消費または出力抑制するものとした．
+\end{itemize}
+
+\section{最適化手法}
+
+本研究では，不確実性を伴う環境下での運用計画を立案するため，ローリング計画法（Rolling Horizon Approach）を用いた混合整数線形計画法（MILP: Mixed Integer Linear Programming）を採用する．
+
+\subsection{ローリング計画法の適用}
+
+時間軸を$\Delta t = 0.5$時間（30分）間隔で離散化し，各時刻をステップ$k \in \mathbb{Z}_{\geq 0}$で表現する．ローリング計画法では，現在時刻$k$から予測期間（ホライズン）$H$ステップ先までの最適化問題を解き，得られた解のうち直近の第1ステップ（時刻$k$の制御入力）のみを実行する．次ステップ$k+1$においては，最新のシステム状態（蓄電池SOC等）および予測されるPV発電量・需要に基づき，再び$H$ステップ先までの計画を更新する．
+
+本手法の採用により，年間を通した大域的な最適化（全17,520ステップを一括で解く場合）に伴う膨大な計算負荷を，各ステップで$H$ステップ分の小規模な問題に分割することで実用的な範囲に低減できる．本研究では，予測期間を$H=96$（48時間）を基準として設定した．
+
+\subsection{料金体系}
+
+本研究で比較検討する2種類の料金体系について説明する．
+
+\subsubsection{北海道電力基本プラン（高圧電力，一般料金）}
+
+北海道電力の料金体系を表\ref{tab:hokkaido_tariff}に示す．
+
+\begin{table}[H]
+\centering
+\caption{北海道電力の料金体系（2024年4月1日実施）}
+\label{tab:hokkaido_tariff}
+\begin{tabular}{lc}
+\toprule
+項目 & 料金単価 \\
+\midrule
+基本料金 & 2,829.60 円/kW \\
+電力量料金 & 21.51 円/kWh \\
+再エネ賦課金 & 3.98 円/kWh \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{基本料金の計算式:}
+\begin{equation}
+C_{\mathrm{basic}} = P_{\mathrm{contract}} \times 2829.60 \times 0.85 \times 12 \quad \text{[円/年]}
+\end{equation}
+
+ここで，$P_{\mathrm{contract}}$は契約電力であり，過去1年間の各月の最大需要電力のうち，最も大きい値を適用する．
+
+\subsubsection{市場価格連動プラン}
+
+市場価格連動プランでは，電力量料金がJEPX（日本卸電力取引所）のスポット価格に連動する．
+
+\textbf{電力量料金の計算式:}
+\begin{equation}
+C_{\mathrm{energy}} = E_{\mathrm{month}} \times (P_{\mathrm{JEPX}}(t) + 3.98) \quad \text{[円/月]}
+\end{equation}
+
+ここで，$P_{\mathrm{JEPX}}(t)$は時刻 $t$ のJEPXスポット価格（円/kWh），3.98は再生可能エネルギー発電促進賦課金（円/kWh）である．基本料金は北海道電力と同額とする．
+
+\subsection{数理モデルの定式化}
+
+\subsubsection{目的関数}
+
+目的関数は，予測期間$H$における電気料金（基本料金相当額および電力量料金）の総和とし，これを最小化する．
+
+\begin{equation}
+\text{Minimize} \quad J = \underbrace{w_{\mathrm{basic}} \cdot s^{\mathrm{BY}}_{\mathrm{MAX}}}_{\text{基本料金相当額}} + \underbrace{\sum_{k=0}^{H-1} p^{\mathrm{BY}}_{k} \cdot s^{\mathrm{BY}}_{k} \cdot \Delta t}_{\text{電力量料金}}
+\end{equation}
+
+ここで，$w_{\mathrm{basic}}$は年間基本料金単価を予測期間長で按分した重み係数である．
+
+\subsubsection{制約条件}
+
+システムの物理的特性および運用上の要請に基づき，以下の制約条件を課す．
+
+\noindent
+\textbf{(1) 電力需給バランス制約}
+
+各時刻において，供給と需要は一致しなければならない．
+\begin{equation}
+g^{\mathrm{P2}}_{k} + s^{\mathrm{BY}}_{k} + x^{\mathrm{FD2}}_{k} = d_{k} + x^{\mathrm{FC1}}_{k}, \quad \forall k
+\end{equation}
+
+充放電電力は変換効率$\eta = 0.98$を介して以下の関係にある．
+\begin{align}
+x^{\mathrm{FC2}}_{k} &= \eta \cdot x^{\mathrm{FC1}}_{k} \\
+x^{\mathrm{FD2}}_{k} &= \eta \cdot x^{\mathrm{FD1}}_{k}
+\end{align}
+
+\noindent
+\textbf{(2) 蓄電池状態遷移および容量制約}
+
+蓄電池のSOC推移は次式で記述される．
+\begin{equation}
+b^{\mathrm{F}}_{k+1} = b^{\mathrm{F}}_{k} + (x^{\mathrm{FC2}}_{k} - x^{\mathrm{FD1}}_{k}) \cdot \Delta t
+\end{equation}
+
+過充電・過放電防止のため，運用範囲を定格容量$C_{\mathrm{bat}}$の5\%〜95\%に制限する．
+\begin{equation}
+0.05 \cdot C_{\mathrm{bat}} \leq b^{\mathrm{F}}_{k} \leq 0.95 \cdot C_{\mathrm{bat}}, \quad \forall k
+\end{equation}
+
+\noindent
+\textbf{(3) 充放電排他および出力制約}
+
+充電と放電の同時実行を物理的に排除するため，二値変数$z_{k}$を用いた以下の制約（Big-M法）を設ける．
+\begin{align}
+x^{\mathrm{FC1}}_{k} &\leq M \cdot z_{k}, \quad \forall k \\
+x^{\mathrm{FD1}}_{k} &\leq M \cdot (1 - z_{k}), \quad \forall k
+\end{align}
+
+ここで，$M$は十分大きな定数（$M = 10^6$）である．また，充放電出力の上限として以下を課す．
+\begin{align}
+x^{\mathrm{FC2}}_{k} &\leq P^{\mathrm{FC}}_{\mathrm{max}}, \quad \forall k \\
+x^{\mathrm{FD1}}_{k} &\leq P^{\mathrm{FD}}_{\mathrm{max}}, \quad \forall k
+\end{align}
+
+本研究では$P^{\mathrm{FC}}_{\mathrm{max}} = P^{\mathrm{FD}}_{\mathrm{max}} = 400$\,kWとした．
+
+\noindent
+\textbf{(4) PV出力制約}
+
+実際に使用するPV発電量は発電可能量を超えない．
+\begin{equation}
+g^{\mathrm{P2}}_{k} \leq g^{\mathrm{P1}}_{k}, \quad \forall k
+\end{equation}
+
+\noindent
+\textbf{(5) 契約電力制約}
+
+予測期間内のすべての時刻において，買電電力は$s^{\mathrm{BY}}_{\mathrm{MAX}}$以下でなければならない．
+\begin{equation}
+s^{\mathrm{BY}}_{k} \leq s^{\mathrm{BY}}_{\mathrm{MAX}}, \quad \forall k
+\end{equation}
+
+\section{主要な結果・知見}
+
+\subsection{蓄電池容量と料金プランの経済性比較}
+
+蓄電池容量と料金プランの経済性を比較した結果を表に示す．
+
+\begin{table}[H]
+\centering
+\caption{蓄電池容量別の年間コスト・契約電力・PV利用率の比較}
+\begin{tabular}{rrrrrrrr}
+\toprule
+ & \multicolumn{3}{c}{北海道電力基本プラン} & \multicolumn{3}{c}{市場価格連動プラン} & \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7}
+容量 [kWh] & コスト [万円] & 契約 [kW] & PV利用率 & コスト [万円] & 契約 [kW] & PV利用率 & 有利 \\
+\midrule
+0 & 1,851.6 & 267.4 & 78.0\% & 1,782.9 & 267.4 & 78.0\% & 市場 \\
+215 & 1,598.4 & 202.4 & 92.4\% & 1,517.8 & 202.5 & 92.4\% & 市場 \\
+430 & 1,535.4 & 189.8 & 98.4\% & 1,500.8 & 205.7 & 98.4\% & 市場 \\
+540 & 1,514.8 & 184.1 & 99.5\% & 1,522.7 & 214.8 & 99.5\% & 北電 \\
+645 & 1,498.0 & 178.7 & 99.9\% & 1,525.6 & 216.4 & 99.9\% & 北電 \\
+860 & 1,475.7 & 170.9 & 100\% & 1,539.7 & 221.6 & 100\% & 北電 \\
+1290 & 1,447.8 & 161.2 & 100\% & 1,554.9 & 227.0 & 100\% & 北電 \\
+1720 & 1,447.6 & 161.2 & 100\% & 1,571.5 & 232.9 & 100\% & 北電 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+蓄電池860kWhの導入により，北海道電力基本プランでは年間375.9万円（20.3\%），市場価格連動プランでは年間243.3万円（13.6\%）のコスト削減を達成した．
+
+\subsection{予測期間の比較}
+
+\begin{table}[H]
+\centering
+\caption{予測期間による年間コスト・計算時間の比較（市場価格連動プラン）}
+\begin{tabular}{lrrrr}
+\toprule
+項目 & 24時間予測 & 48時間予測 & 60時間予測 & 72時間予測 \\
+\midrule
+年間コスト [円] & 15,872,724 & 15,396,972 & 15,376,321 & 15,227,416 \\
+24時間比コスト差 [円] & - & $-$475,752 & $-$496,403 & $-$645,308 \\
+計算時間 [分] & 12.8 & 35.1 & 43.7 & 58.9 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{システムの運用パターン（可視化）}
+
+\subsection{代表的な日の運用パターン}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{../png/soc860/daily_battery_pattern.png}
+\caption{需要が高い日の運用パターン（需要約2,450 kWh）．上：PV発電量が多い日，下：PV発電量が少ない日．}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{../png/soc860/daily_battery_pattern_low_demand.png}
+\caption{需要が低い日の運用パターン（需要約1,290 kWh）．上：PV発電量が多い日，下：PV発電量が少ない日．}
+\end{figure}
+
+\subsection{蓄電池容量と契約電力・年間コストの関係}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{../png/soc860/capacity_contract_power.png}
+\caption{蓄電池容量と契約電力・年間コストの関係．北電基本プランでは容量増加に伴い契約電力が単調減少，市場連動プランでは430kWh以降で増加に転じる．}
+\end{figure}
+
+\subsection{年間運用推移}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../png/soc860/annual_pv_buy_demand.png}
+\caption{年間のPV発電量・買電量・需要の推移（北海道電力基本プラン，蓄電池860kWh）}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../png/soc860/annual_soc.png}
+\caption{年間の蓄電池SOC推移（北海道電力基本プラン，蓄電池860kWh，2024年）}
+\end{figure}
+
+\section{モデルの制約と限界}
+
+本節では，採用した最適化手法の限界と，それが結果に与える影響を明確にする．
+
+\subsection{基本料金係数の按分手法}
+
+契約電力（基本料金の決定要因）は，本来「年間17,520ステップの中の最大買電電力」という\textbf{大域的な指標}で決定される．しかし，ローリング計画法では年間を通した最適化が計算上困難であるため，各予測期間（96ステップ，48時間）内の最大値$s^{\mathrm{BY}}_{\mathrm{MAX}}$に按分係数$w_{\mathrm{basic}}$を乗じてペナルティを与える近似を採用した．
+
+この「局所的な最大値の抑制」を通じて「大域的な最大値」を間接的に制御する手法には，以下の数理的問題がある：
+
+\begin{enumerate}
+    \item \textbf{最適化基準と評価基準の乖離}：ソルバーは各予測期間で「$w_{\mathrm{basic}} \times s^{\mathrm{BY}}_{\mathrm{MAX}}$」を最小化しようとするが，最終的な基本料金は「年間最大買電電力 × 単価」で計算される．
+    \item \textbf{局所最適と大域最適の不一致}：ある予測期間で買電電力の最大値を抑制する努力が，別の期間で発生するより大きな買電電力により無効化される可能性がある．
+    \item \textbf{按分係数の重みの影響}：$w_{\mathrm{basic}}$の値によって，ソルバーの「買電電力の最大値抑制」と「電力量料金削減」のトレードオフ判断が変化する．
+\end{enumerate}
+
+北海道電力基本プランでは電力量料金が一定であるため，ソルバーは自然に買電電力を平準化する方向に最適化を行い，按分手法の影響は限定的である．一方，市場価格連動プランではJEPX価格の変動（3.80〜31.00円/kWh）により，「安価な時間帯への買電集中」と「買電電力の最大値抑制」のトレードオフが生じ，大容量蓄電池ほど契約電力が増大する傾向が確認された．
+
+\subsection{結論の解釈における注意点}
+
+本研究の結論を解釈する際には以下の点に注意が必要である：
+
+\begin{enumerate}
+    \item 市場価格連動プランの「最適容量430kWh」は按分係数の設定値に依存する可能性がある
+    \item 契約電力の増加現象は，時間的裁定の本質的特性と按分手法の限界の両方が寄与している
+    \item 両プラン比較において，按分手法の影響に非対称性がある
+\end{enumerate}
+
+\noindent
+\textbf{今後の課題}：按分手法の限界を克服するためには，$w_{\mathrm{basic}}$の感度分析，年間契約電力の明示的追跡機構の導入，異なる最適化手法との比較検証が必要である．
+
+\section{結論}
+
+\begin{enumerate}
+    \item \textbf{料金プランの優位性と蓄電池容量}：容量430kWh以下では市場価格連動プランが有利，540kWh以上では北海道電力基本プランが有利となる分岐点が存在する．
+    \item \textbf{最適容量における比較}：北海道電力基本プランの方が年間\textbf{約53万円安価}である．
+    \item \textbf{契約電力への影響}：北電基本プランでは容量増加に伴い契約電力が減少，市場連動プランでは430kWh超で逆に増加する．
+    \item \textbf{蓄電池導入効果}：北海道電力基本プラン＋1720kWhで年間約404万円のコスト削減を達成．
+    \item \textbf{予測期間の妥当性}：48時間（96ステップ）の予測期間が計算コストと効果のバランスから実用的．
+\end{enumerate}
+
+\end{document}

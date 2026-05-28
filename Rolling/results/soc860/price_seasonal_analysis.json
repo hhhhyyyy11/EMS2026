@@ -1,0 +1,180 @@
+{
+  "annual_statistics": {
+    "mean": 16.86804680365297,
+    "median": 16.41,
+    "min": 3.99,
+    "max": 53.629999999999995,
+    "std": 4.956057963810401,
+    "above_hokkaido_rate": 18.4703196347032,
+    "hokkaido_price": 21.51
+  },
+  "monthly": [
+    {
+      "month": 1,
+      "month_name": "1月",
+      "mean": 14.066922043010754,
+      "median": 13.795,
+      "min": 3.99,
+      "max": 23.1,
+      "std": 2.106766008546266,
+      "above_hokkaido_rate": 0.4032258064516129
+    },
+    {
+      "month": 2,
+      "month_name": "2月",
+      "mean": 13.417976190476192,
+      "median": 13.004999999999999,
+      "min": 3.99,
+      "max": 25.22,
+      "std": 3.0268500241473206,
+      "above_hokkaido_rate": 1.9345238095238095
+    },
+    {
+      "month": 3,
+      "month_name": "3月",
+      "mean": 15.939206989247312,
+      "median": 15.785,
+      "min": 3.99,
+      "max": 40.57,
+      "std": 4.865918120510522,
+      "above_hokkaido_rate": 11.424731182795698
+    },
+    {
+      "month": 4,
+      "month_name": "4月",
+      "mean": 14.296152777777777,
+      "median": 15.52,
+      "min": 3.99,
+      "max": 23.98,
+      "std": 5.243695581742719,
+      "above_hokkaido_rate": 4.444444444444445
+    },
+    {
+      "month": 5,
+      "month_name": "5月",
+      "mean": 15.669126344086022,
+      "median": 16.03,
+      "min": 3.99,
+      "max": 25.88,
+      "std": 5.556866443416766,
+      "above_hokkaido_rate": 13.978494623655912
+    },
+    {
+      "month": 6,
+      "month_name": "6月",
+      "mean": 16.718791666666664,
+      "median": 16.52,
+      "min": 3.99,
+      "max": 25.75,
+      "std": 4.293901852451341,
+      "above_hokkaido_rate": 15.416666666666668
+    },
+    {
+      "month": 7,
+      "month_name": "7月",
+      "mean": 18.388857526881722,
+      "median": 17.485,
+      "min": 3.99,
+      "max": 33.98,
+      "std": 4.737766269577723,
+      "above_hokkaido_rate": 26.0752688172043
+    },
+    {
+      "month": 8,
+      "month_name": "8月",
+      "mean": 19.146344086021504,
+      "median": 19.625,
+      "min": 8.99,
+      "max": 25.31,
+      "std": 3.7577071404624056,
+      "above_hokkaido_rate": 32.795698924731184
+    },
+    {
+      "month": 9,
+      "month_name": "9月",
+      "mean": 19.265472222222222,
+      "median": 17.98,
+      "min": 3.99,
+      "max": 53.629999999999995,
+      "std": 6.285483616546695,
+      "above_hokkaido_rate": 30.277777777777775
+    },
+    {
+      "month": 10,
+      "month_name": "10月",
+      "mean": 18.749690860215054,
+      "median": 18.045,
+      "min": 3.99,
+      "max": 42.98,
+      "std": 5.127827194853543,
+      "above_hokkaido_rate": 37.634408602150536
+    },
+    {
+      "month": 11,
+      "month_name": "11月",
+      "mean": 18.779458333333334,
+      "median": 18.45,
+      "min": 6.98,
+      "max": 25.3,
+      "std": 3.9516871228748873,
+      "above_hokkaido_rate": 29.444444444444446
+    },
+    {
+      "month": 12,
+      "month_name": "12月",
+      "mean": 17.695900537634408,
+      "median": 18.09,
+      "min": 4.0,
+      "max": 26.98,
+      "std": 3.6436673140044356,
+      "above_hokkaido_rate": 16.397849462365592
+    }
+  ],
+  "seasonal": [
+    {
+      "season": "Spring (Mar-May)",
+      "mean": 15.312423007246377,
+      "median": 15.85,
+      "min": 3.99,
+      "max": 40.57,
+      "std": 5.277208806874404,
+      "above_hokkaido_rate": 10.009057971014492,
+      "count": 4416
+    },
+    {
+      "season": "Summer (Jun-Aug)",
+      "mean": 18.09951086956522,
+      "median": 17.31,
+      "min": 3.99,
+      "max": 33.98,
+      "std": 4.398263029525635,
+      "above_hokkaido_rate": 24.86413043478261,
+      "count": 4416
+    },
+    {
+      "season": "Autumn (Sep-Nov)",
+      "mean": 18.929542124542124,
+      "median": 18.25,
+      "min": 3.99,
+      "max": 53.629999999999995,
+      "std": 5.212791639422774,
+      "above_hokkaido_rate": 32.50915750915751,
+      "count": 4368
+    },
+    {
+      "season": "Winter (Dec-Feb)",
+      "mean": 15.11500925925926,
+      "median": 14.245000000000001,
+      "min": 3.99,
+      "max": 26.98,
+      "std": 3.538002780109221,
+      "above_hokkaido_rate": 6.388888888888888,
+      "count": 4320
+    }
+  ],
+  "insights": {
+    "highest_price_month": "9月",
+    "lowest_price_month": "2月",
+    "most_volatile_month": "9月"
+  }
+}

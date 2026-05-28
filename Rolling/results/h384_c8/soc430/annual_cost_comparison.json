@@ -1,0 +1,33 @@
+{
+  "hokkaido_basic": {
+    "basic_charge": 5353839.19811609,
+    "energy_charge": 11409978.856593793,
+    "fuel_adjustment": -4011485.2028883644,
+    "renewable_levy": 2111190.8809504085,
+    "total": 14863523.732771927,
+    "peak_demand_kW": 185.4983728773446,
+    "annual_buy_kWh": 530449.9700880424
+  },
+  "market_linked": {
+    "basic_charge": 5353839.198116114,
+    "energy_charge": 6539398.931098385,
+    "renewable_levy": 2132303.5365951397,
+    "total": 14025541.665809639,
+    "peak_demand_kW": 185.49837287734545,
+    "annual_buy_kWh": 535754.6574359648
+  },
+  "cheaper_plan": "market_linked",
+  "experiment_params": {
+    "horizon": 384,
+    "horizon_hours": 192.0,
+    "bF_max_kWh": 430.0,
+    "time_limit_per_step": 10.0,
+    "total_steps": 17520
+  },
+  "timing": {
+    "hokkaido_basic_seconds": 5488.246595859528,
+    "market_linked_seconds": 824.385055065155,
+    "total_seconds": 6315.370602846146,
+    "total_minutes": 105.25617671410242
+  }
+}

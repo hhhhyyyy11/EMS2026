@@ -1,0 +1,325 @@
+% Time-stamp: <2025-05-15 01:26:31 okumura>
+\documentclass{jarticle}
+
+\usepackage{tam}
+\usepackage{fleqn}
+\usepackage{url}
+\usepackage{bm}
+\usepackage[dvipdfmx]{graphicx}
+\usepackage[dvipdfmx]{color}
+%\usepackage{color}
+\usepackage{colordef}
+\usepackage{amssymb}
+\usepackage{pdfpages}
+\usepackage{ulem}
+
+%%%%%%%%%% Command alias %%%%%%%%%%
+\newcommand{\IB}{$\bullet$}
+\newcommand{\IC}{$\circ$}
+\newcommand{\IS}{$*$}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\title{買電と自己託送を考慮した電力運用最適化モデル}
+\author{神戸大学大学院 奥村侑真}
+\date{}
+
+\def\baselinestretch{1.02}
+\renewcommand{\thefootnote}{\roman{footnote}}
+
+\begin{document}
+\maketitle
+
+\section{はじめに}
+図\ref{fig:tecseed}に示す電力ネットワークに対する，電力クラスタの電力運
+用最適化モデルを示す．
+
+\begin{figure}[h]
+ \centering
+ \includegraphics[width=155mm]{../tecseed.pdf}
+ \caption{テクシード構成図}
+ \label{fig:tecseed}
+\end{figure}
+
+\section{準備}
+
+基本要素およびそのスペックを表す定数(\IB を付して記す)と状態変数(\IC を付
+して表す)として以下のものを用意する．
+
+%\begin{itemize}
+% \item[$\triangleright$] 電力クラスタC$_{i}$ $(i=1,\ldots,N)$:
+\begin{itemize}
+ \item[\IS] 期T$_k$ ($k=1,\ldots,K$)．本実験では各期の幅($\Delta$)は$30$分としている．
+ \item[\IS] 太陽光発電機G
+ \item[\IS] 消費機器D$^{\rm A}$
+ \item[\IS] 消費機器D$^{\rm B}$
+ \item[\IS] 消費機器D$^{\rm C}$
+ \item[\IS] 消費機器（テクシード本社工場）D$^{\rm D}$
+   \begin{itemize}
+   \item[\IB] 本社工場が必要とする電力 $d^{\rm D}$
+   \item[\IB] 本社工場へ託送することのインセンティブ係数 $p^{\rm D}$   
+  \end{itemize} 
+ \item[\IS] 固定バッテリーB$^{\rm F}$
+  \begin{itemize}
+   \item[\IB] 固定バッテリーの容量 $\overline{b}$
+  \end{itemize}
+ \item[\IS] 電力変換器(太陽光) E$^{\rm P}$
+  \begin{itemize}
+   \item[\IB] 変換効率 $\alpha^{\rm P}$
+  \end{itemize}
+ \item[\IS] 電力変換器(系統電力) E$^{\rm S}$
+ \item[\IS] 電力変換器(消費機器A) E$^{\rm DA}$
+  \begin{itemize}
+   \item[\IB] 変換効率 $\alpha^{\rm DA}$
+  \end{itemize}
+ \item[\IS] 電力変換器(消費機器B) E$^{\rm DB}$
+  \begin{itemize}
+   \item[\IB] 変換効率 $\alpha^{\rm DB}$
+  \end{itemize}
+ \item[\IS] 電力変換器(消費機器C) E$^{\rm DC}$
+  \begin{itemize}
+   \item[\IB] 変換効率 $\alpha^{\rm DC}$
+  \end{itemize}
+  \item[\IS] 電力変換器(消費機器D) E$^{\rm DD}$
+  \begin{itemize}
+   \item[\IB] 変換効率 $\alpha^{\rm DD}$
+  \end{itemize} 
+ \item[\IS] バッテリーの自己放電に相当する仮想的な変換器 Z$^{ -1}$
+  \begin{itemize}
+   \item[\IB] 期$k$の先頭から期$k$の末尾にかけての自己放電効率$\alpha^{\rm FT}$
+  \end{itemize}
+ \item[\IS] 電力変換器(固定バッテリー)E$^{\rm BF}$
+  \begin{itemize}
+   \item[\IB] 充電効率 $\alpha^{\rm FC}$
+   \item[\IB] 放電効率 $\alpha^{\rm FD}$
+  %\item[\IB] 単位時間あたりの最大充電電量 $a^{\rm FC}$
+  %\item[\IB] 単位時間あたりの最大充放電量 $a^{\rm FD}$
+  \end{itemize}
+ \item[\IS] 系統電力S
+   \begin{itemize}
+   \item[\IB] 系統電力量料金単価 $p^{\rm BY}_{k}$
+   \item[\IB] 系統基本料金単価 $p^{\rm BYMax}$
+   %\item[\IB] 系統売電単価 $p^{\rm SL}_{k}$
+   %\item[\IB] 単位時間あたりの最大系統売電量 $a^{\rm SL}_{k}$
+  \end{itemize}
+ \item[\IS] 工場外の空間O
+\end{itemize}
+
+
+\section{定数・変数 \mbox{\normalsize\rm 
+~ (定数を「\IB」，変数を「\IC」を付して記すものとする)}}
+
+ \begin{itemize}
+  \item[\IB] 太陽光発電電力量(変換前) $g^{\rm P1}_{k}$
+  \item[\IB] 太陽光発電電力量(変換後) $g^{\rm P2}_{k}$
+  \item[\IC] ムダ電力量 (太陽光発電出力抑制量)$v_{k}$ \\[-2.5ex]
+  %
+  \item[\IB] 消費電力A (変換前) $d^{\rm A1}_{k}$
+  \item[\IB] 消費電力A (変換後) $d^{\rm A2}_{k}$
+  %
+  \item[\IB] 消費電力B (変換前) $d^{\rm B1}_{k}$
+  \item[\IB] 消費電力B (変換後) $d^{\rm B2}_{k}$
+  %
+  \item[\IB] 消費電力C (変換前) $d^{\rm C1}_{k}$
+  \item[\IB] 消費電力C (変換後) $d^{\rm C2}_{k}$
+  %
+  \item[\IC] 託送電力D (変換前) $d^{\rm D1}_{k}$
+  \item[\IC] 託送電力D (変換後) $d^{\rm D2}_{k}$
+  %
+  \item[\IB] 固定バッテリーの初期SOC $b^{\rm F}_{0}$
+  \item[\IC] 固定バッテリーの(期末の)SOC $b^{\rm F}_{k}$
+  \item[\IC] 期$k$の末尾における固定バッテリーの充電量(変換前) $x^{\rm FC1}_{k}$
+  \item[\IC] 期$k$の末尾における固定バッテリーの充電量(変換後) $x^{\rm FC2}_{k}$
+  \item[\IC] 期$k$の末尾における固定バッテリーの放電量(変換前) $x^{\rm FD1}_{k}$
+  \item[\IC] 期$k$の末尾における固定バッテリーの放電量(変換後) $x^{\rm FD2}_{k}$ \\[-2.5ex]
+
+  %
+  \item[\IC] 系統買電力量$s^{\rm BY}_{k}$
+  \item[\IC] 系統買電力量の最大値$s^{\rm BYMax}$
+  %\item[\IC] 系統売電力量$s^{\rm SL}_{k}$
+  %\item[\IC] 系統電力量(変換前)$s^{1}_{k}$．
+  %\item[\IC] 系統電力量(変換後)$s^{2}_{k}$．
+  %\item[\IB] 変換効率$\alpha^{\rm S}$．
+  %
+ % \end{itemize}
+\end{itemize}
+
+
+\section{数理計画モデル}
+
+前項で示した定数・変数を用いて，電力運用最適化問題の線形計画モデルを示す．
+%
+
+\noindent
+{\rm Minimize}
+\begin{equation}
+ \sum_{k=1}^{K} \left( p^{\rm BY}_{k}s^{\rm BY}_{k} - p^{\rm D}_{k}d^{\rm D2}_{k} \right) + p^{\rm BYMax} s^{\rm BYMax}
+ \label{eq:minimize}
+\end{equation}
+
+\noindent
+{\rm Subject to}
+%
+\begin{equation}
+ g^{\rm P2}_{k} + s^{\rm BY} - s^{\rm SL}_{k}
+ - x^{\rm FC1}_{k} + x^{\rm FD2}_{k} 
+ - d^{\rm A1}_{k} - d^{\rm B1}_{k} - d^{\rm C1}_{k} - d^{\rm D1}_{k} - v_{k} = 0,
+ \hfill
+ k=1,\ldots,K
+~~
+\end{equation}
+%
+\begin{center} --- $ \cdot $ --- $ \cdot $ --- \end{center}
+%
+\begin{equation}
+ g^{\rm P2}_{k} \le \alpha^{\rm P} g^{\rm P1}_{k} ,
+ \hfill
+ k=1,\ldots,K
+ ~~
+ \label{eq:gP1gP2}
+\end{equation}
+%
+\begin{center} --- $ \cdot $ --- $ \cdot $ --- \end{center}
+%
+\begin{equation}
+ d^{\rm A2}_{k} \le \alpha^{\rm DA} d^{\rm A1}_{k} ,
+ \hfill
+ k=1,\ldots,K
+~~
+ \label{eq:dA1A2}
+\end{equation}
+%
+\begin{equation}
+ d^{\rm B2}_{k} \le \alpha^{\rm DB} d^{\rm B1}_{k},
+ \hfill
+ k=1,\ldots,K
+~~
+ \label{eq:dB1B2}
+\end{equation}
+%
+\begin{equation}
+ d^{\rm C2}_{k} \le \alpha^{\rm DC} d^{\rm C1}_{k},
+ \hfill
+ k=1,\ldots,K
+~~
+ \label{eq:dC1C2}
+\end{equation}
+%
+\begin{equation}
+ d^{\rm D2}_{k} \le \alpha^{\rm DD} d^{\rm D1}_{k},
+ \hfill
+ k=1,\ldots,K
+~~
+ \label{eq:dD1D2}
+\end{equation}
+%
+\begin{center} --- $ \cdot $ --- $ \cdot $ --- \end{center}
+%
+\begin{equation}
+ x^{\rm FC2}_{k} \le \alpha^{\rm FC}x^{\rm FC1}_{k},
+ \hfill
+ k=1,\ldots,K
+~~
+ \label{eq:xFC1FC2}
+\end{equation}
+%
+\begin{equation}
+ x^{\rm FD2}_{k} \le \alpha^{\rm FD} x^{\rm FD1}_{k} ,
+ \hfill
+ k=1,\ldots,K
+~~
+ \label{eq:FD1FD2}
+\end{equation}
+%
+\begin{equation}
+ b^{\rm F}_{0} =  b^{\rm F}_{K}
+~~
+\end{equation}
+%
+\begin{equation}
+ b^{\rm F}_{k} = \alpha^{\rm FT} b^{\rm F}_{k-1} + x^{\rm FC2}_{k} - x^{\rm FD1}_{k},
+ \hfill
+ k=1,\ldots,K
+~~
+\end{equation}
+%
+\begin{equation}
+ b^{\rm F}_{k} \le 0.95\overline{b}^{\rm F},
+ \hfill
+ k=1,\ldots,K
+~~
+\end{equation}
+%
+\begin{equation}
+ x^{\rm FC2}_{k} \le a^{\rm FC},
+ \hfill
+ k=1,\ldots,K
+~~
+\end{equation}
+%
+\begin{equation}
+ x^{\rm FD1}_{k} \le a^{\rm FD},
+ \hfill
+ k=1,\ldots,K
+~~
+\end{equation}
+%
+\begin{center} --- $ \cdot $ --- $ \cdot $ --- \end{center}
+%
+\begin{equation}
+ d^{\rm D2}_{k} \le  d^{\rm D}_{k}
+ \hfill
+ k=1,\ldots,K
+~~
+ \label{eq:dD2Max}
+\end{equation}
+%
+\begin{center} --- $ \cdot $ --- $ \cdot $ --- \end{center}
+%
+\begin{equation}
+  s^{\rm BY}_{k}  \le  s^{\rm BYMax}
+ \hfill
+ k=1,\ldots,K
+~~
+ \label{eq:sMax}
+\end{equation}
+
+モデル中の定数・変数と電力クラスタとの関係を図\ref{fig:tecseed_2}に示す．
+
+\begin{figure}[h]
+ \centering
+ \includegraphics[width=140mm]{../figure/tecseed_takuso.png}
+ \caption{電力クラスタの構成図 (\textcolor{red}{赤: 決定変数}，\textcolor{blue}{青: 従属変数}，\textcolor{green3}{定数(外生変数)})}
+ \label{fig:tecseed_2}
+\end{figure}
+
+\section{買電・自己託送を考慮した，電力運用最適化の実験}
+「20250501-0930テクシード電力量データ.xlsx」をもとに，2025年5月1日から9月30日までの5ヶ月間を実験対象の期間とした．
+なお，式(\ref{eq:minimize})における，$p^{\rm BYMax}_k$の値については，四国電力の基本料金を参照して1412.61に設定した。また，$p^{\rm D}$については十分に小さい値(本実験では$10^{-5}$)に設定した．これは，託送電力を増やすことよりも買電料金を抑えることを優先するためであり，託送電力を増やすために買電を増やすという挙動を防ぐことを意図している．
+PySCIPOptを用いて最適化の実験を行ったが，SCIPの前処理に要した時間が17.44秒であり，最適解の探索を行うSCIPの本計算に要した時間が15.64秒であった．
+実際に得られた結果を図\ref{fig:results_p1}，\ref{fig:results_p2}に示す．
+
+\begin{figure}[h]
+ \centering
+ \includegraphics[width=1.1\textwidth, page=1]{Optimization_Results_takuso_LP.pdf} % 幅は適宜調整
+  \caption{最適化結果}
+ \label{fig:results_p1}
+\end{figure}
+
+\begin{figure}[h]
+ \centering
+ \includegraphics[width=1.1\textwidth, page=2]{Optimization_Results_takuso_LP.pdf} % 幅は適宜調整
+  \caption{最適化結果}
+ \label{fig:results_p2}
+\end{figure}
+
+\section{買電のみを考慮した，電力運用最適化の実験}
+前節から「どの期も託送を行ってはいけない」という制約条件のみを新たに加えて，実験を行った結果を図\ref{fig:results2_p1}に示す．
+
+\begin{figure}[h]
+ \centering
+ \includegraphics[width=1.1\textwidth, page=1]{Optimization_Results_notakuso_LP.pdf} % 幅は適宜調整
+  \caption{最適化結果}
+ \label{fig:results2_p1}
+\end{figure}
+
+\end{document}
