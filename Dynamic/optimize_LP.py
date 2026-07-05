@@ -26,6 +26,7 @@ elif os.name == 'posix':
 parser = argparse.ArgumentParser(description='Dynamic LP optimization runner')
 parser.add_argument('--config', default='config.json', help='Path to config.json')
 parser.add_argument('--sheet', default='30分値', help='Excel sheet name for energy data')
+parser.add_argument('--objective_mode', default=None, help='Objective mode: minimize_total_cost or minimize_peak (overrides config)')
 args, unknown = parser.parse_known_args()
 
 # 設定とデータのロード
@@ -70,6 +71,10 @@ sBYMAX = 1000.0  # 十分に大きな契約電力 [kW]
 # 目的関数の重み
 pBYMAX_weight = 2829.60 * 0.85 * 12 * (K * 0.5) / (24 * 365)  # 契約電力（基本料金）の按分重み
 
+# 目的関数モードの決定（CLI引数優先、なければconfig.json）
+objective_mode = args.objective_mode if args.objective_mode else config.get('objective_mode', 'minimize_total_cost')
+print(f"Objective mode: {objective_mode}")
+
 # 最適化モデルの作成
 model = Model('PowerOptimization_LP_30min')
 
@@ -95,13 +100,18 @@ sBYMAX_var = model.addVar(vtype='C', name='sBYMAX_var', lb=0)
 # 非同時充放電のためのバイナリ変数
 z = {k: model.addVar(vtype='B', name=f'z_{k}') for k in range(K)}
 
-# 目的関数の設定 (基本料金 + 電力量料金)
+# 目的関数の設定
 # 30分値のため、電力量 [kWh] への換算として * 0.5 をかける
-model.setObjective(
-    pBYMAX_weight * sBYMAX_var +
-    sum(pBY[k] * sBY[k] * 0.5 - (pSL[k] - 1e-9) * sSL[k] * 0.5 for k in range(K)),
-    'minimize'
-)
+if objective_mode == 'minimize_peak':
+    # 案1：最大買電電力（ピーク）の最小化のみ
+    model.setObjective(sBYMAX_var, 'minimize')
+else:
+    # 案2（既存）：基本料金 + 電力量料金のトータルコスト最小化
+    model.setObjective(
+        pBYMAX_weight * sBYMAX_var +
+        sum(pBY[k] * sBY[k] * 0.5 - (pSL[k] - 1e-9) * sSL[k] * 0.5 for k in range(K)),
+        'minimize'
+    )
 
 # 制約の追加
 M = 1e6  # 大きな定数
@@ -145,12 +155,29 @@ for k in range(K):
 
 # 最適化の実行
 print("最適化計算を実行中 (SCIP)...")
+model.setParam('limits/time', 1800)  # 制限時間を30分に設定
 model.optimize()
 
-if model.getStatus() == "optimal":
-    print("最適解が見つかりました。")
-    print(f"最適目的関数値: {model.getObjVal():.2f} 円")
-    print(f"最大デマンド (sBYMAX): {model.getVal(sBYMAX_var):.2f} kW")
+status = model.getStatus()
+if status in ("optimal", "timelimit") and model.getNSols() > 0:
+    if status == "optimal":
+        print("最適解が見つかりました。")
+    else:
+        print(f"制限時間内に最適解は確定しませんでしたが、実行可能解が見つかりました (Gap: {model.getGap()*100:.4f}%)。")
+    print(f"最適目的関数値: {model.getObjVal():.2f}")
+    
+    # 共通結果集計
+    peak_demand = model.getVal(sBYMAX_var)
+    energy_cost = sum(pBY[k] * model.getVal(sBY[k]) * 0.5 for k in range(K))
+    # 基本料金の事後計算: 基本料金単価 2,829.60 円/kW × 力率割引 0.85 × 12ヶ月
+    annual_basic_cost = peak_demand * 2829.60 * 0.85 * 12
+    total_cost = annual_basic_cost + energy_cost
+    
+    print(f"=== 結果サマリ ({objective_mode}) ===")
+    print(f"最大買電電力 (ピークデマンド): {peak_demand:.2f} kW")
+    print(f"年間電力量料金: {energy_cost:.0f} 円")
+    print(f"年間基本料金 (事後計算): {annual_basic_cost:.0f} 円")
+    print(f"年間トータルコスト: {total_cost:.0f} 円")
 else:
     print(f"最適解が見つかりませんでした。ステータス: {model.getStatus()}")
 
@@ -179,5 +206,6 @@ df_results = pd.DataFrame(results, columns=columns)
 df_results.index = df_trend.index
 
 os.makedirs('Dynamic/results', exist_ok=True)
-df_results.to_csv('Dynamic/results/dynamic_lp_results.csv', index=True)
-print("結果を 'Dynamic/results/dynamic_lp_results.csv' に保存しました。")
+output_filename = f'Dynamic/results/dynamic_lp_results_{objective_mode}.csv'
+df_results.to_csv(output_filename, index=True)
+print(f"結果を '{output_filename}' に保存しました。")

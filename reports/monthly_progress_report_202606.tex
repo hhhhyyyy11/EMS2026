@@ -1,0 +1,254 @@
+\documentclass[a4paper,11pt,dvipdfmx]{jsarticle}
+
+\usepackage[top=20mm, bottom=25mm, left=20mm, right=20mm]{geometry}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{multirow}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,calc}
+
+\title{今月の進捗報告\\[0.5em]\large デマンド目標値を考慮したEMS最適化モデルの再定式化}
+\author{神戸大学大学院システム情報学研究科 修士1年\\山崎博之}
+\date{2026年6月}
+
+\begin{document}
+
+\maketitle
+
+\section{背景}
+エネルギーマネジメントシステム（EMS）における蓄電池充放電計画では，電力量料金だけでなく，契約電力に基づいて決定される基本料金を適切に考慮する必要がある．高圧契約における契約電力は，原則として当月を含む過去12か月の最大需要電力に基づいて決定される．したがって，ある月の基本料金を評価するには，当月の買電電力だけでなく，過去月の実績ピークも同時に参照する必要がある．
+
+この点を考慮しない場合，最適化モデル内で扱う基本料金と，実際の料金制度に基づく基本料金との間にずれが生じる．例えば，過去12か月のどこかで大きな買電ピークが発生している場合，そのピークが参照期間に残っている間は，当月の買電電力を抑えても契約電力は下がらない．一方で，高い買電ピークが12か月の参照期間から外れた後は，その後の運用で買電電力をどこまで抑えられるかが，契約電力の低減に直結する．
+
+\section{モデル化の方針と計算条件}
+本稿では，基本料金の計算方法として2つの方法を比較する．1つ目は，最適化対象の1年間だけを見て，その中の最大買電電力を契約電力として扱う方法である．この方法では，過去の買電実績は考慮されない．
+
+2つ目は，各月ごとに，当月を含む過去12か月の中の最大買電電力を契約電力として扱う方法である．これは実際の高圧契約における基本料金の決まり方に近い．本研究では，この2つの方法を同じ需要・PVデータ，同じ蓄電池条件で計算し，基本料金と年間総コストの違いを比較する．
+
+過去12か月最大値で計算する方法では，最適化対象の各月に対してデマンド目標値変数を定義し，その月を含む過去12か月間の全ての買電電力が，対応するデマンド目標値以下となるように制約を課す．このとき，過去1年分については実績データとして扱い，最適化対象年の蓄電池の充放電計画を決定する．
+
+本計算では，現時点で1年分のデータ（昨年度のローリング計画に用いたデータ）しか準備できていないため，1年目（過去実績年）と2年目（最適化対象年）に同一の2025年データを用いた．ただし，1年目は過去実績として固定し，2年目のみを最適化対象とした．また，1年目の買電電力には，同じデータに対して，最適化対象年内の最大買電電力のみを用いて基本料金を評価する従来の方法を適用して得られた買電電力系列を用いた．このため，本結果は「前年も同程度にピーク抑制された運用が行われていた場合」を仮定した計算であり，実際の過去1年分の買電実績データを用いた評価とは区別して解釈する必要がある．
+
+電気料金条件は，基本料金単価を $2,829.60 \times 0.85 = 2,405.16$\,円/kW/月，電力量料金単価を21.51\,円/kWhとした．蓄電池条件は，容量860\,kWh，最大充放電出力400\,kW，充放電効率0.98，初期SOC50\%である．
+
+\section{数理モデル}
+30分ごとの時間ステップをインデックス $k$ で表す．また，最適化対象年の月を $m \in \{1,\dots,12\}$，30分時間幅を $\Delta t=0.5$\,h とする．本節では，前提条件と制約式を整理する．
+
+\subsection{時間ステップの集合}
+過去実績年に含まれる時間ステップの集合を $\mathcal{K}^{(1)}$，最適化対象年に含まれる時間ステップの集合を $\mathcal{K}^{(2)}$ とする．
+
+最適化対象年の第 $m$ 月（$m=1,\dots,12$）だけに含まれる時間ステップの集合を $\mathcal{K}^{(2)}_{m}$ と定義する．これは月 $m$ の電力量料金や月内ピークを集計するための集合である．
+
+一方，月 $m$ の基本料金を計算するときは，月 $m$ だけではなく，当月を含む直近12か月間の買電電力を参照する．この直近12か月間に含まれる時間ステップの集合を $\mathcal{K}^{p}_{m}$ と定義する．すなわち，$\mathcal{K}^{p}_{m}$ は，最適化対象年の月 $m$ から数えて11か月前の月から月 $m$ までに含まれる時間ステップ全体である．したがって，$\mathcal{K}^{p}_{m}$ には，過去実績年の一部と，最適化対象年の当月までの時間ステップが含まれる．
+
+図\ref{fig:rolling_12months}に，月別デマンド目標値が参照する時間範囲の概念を示す．例えば，最適化対象年の1月は過去実績年の2月から12月と最適化対象年の1月を参照し，12月は最適化対象年の1月から12月のみを参照する．そのため，過去実績年に高いピークが存在する場合，そのピークが参照範囲から外れるまで基本料金は低下しない．
+
+\begin{figure}[H]
+    \centering
+    \begin{tabular}{cccc}
+        \toprule
+        対象月 $m$ & 参照集合                   & 過去実績年から参照する月 & 最適化対象年から参照する月 \\
+        \midrule
+        1月      & $\mathcal{K}^{p}_{1}$  & 2--12月       & 1月            \\
+        4月      & $\mathcal{K}^{p}_{4}$  & 5--12月       & 1--4月         \\
+        8月      & $\mathcal{K}^{p}_{8}$  & 9--12月       & 1--8月         \\
+        12月     & $\mathcal{K}^{p}_{12}$ & なし           & 1--12月        \\
+        \bottomrule
+    \end{tabular}
+    \caption{月別デマンド目標値が参照する過去12か月範囲の例}
+    \label{fig:rolling_12months}
+\end{figure}
+
+本モデルで用いる主な変数および定数は以下の通りである．
+
+\begin{itemize}
+    \item $d_{k}$：ステップ $k$ における施設需要 [kW]
+    \item $G^{\mathrm{PV}}_{k}$：ステップ $k$ における利用可能PV発電電力 [kW]
+    \item $g^{\mathrm{PV}}_{k}$：ステップ $k$ における使用PV発電電力 [kW]
+    \item $w_{k}$：ステップ $k$ における余剰電力を吸収する非負変数 [kW]
+    \item $S^{\mathrm{BY}}_{k}$：ステップ $k$ における買電電力 [kW]
+    \item $x^{\mathrm{FC1}}_{k}, x^{\mathrm{FC2}}_{k}$：蓄電池の充電電力（変換前，変換後）[kW]
+    \item $x^{\mathrm{FD1}}_{k}, x^{\mathrm{FD2}}_{k}$：蓄電池の放電電力（変換前，変換後）[kW]
+    \item $b^{\mathrm{F}}_{k}$：ステップ $k$ 終了時の蓄電池SOC [kWh]
+    \item $b^{\mathrm{F}}_{\max}$：蓄電池容量 [kWh]
+    \item $a^{\mathrm{FC}}, a^{\mathrm{FD}}$：蓄電池の最大充電出力，最大放電出力 [kW]
+    \item $\alpha^{\mathrm{FC}}, \alpha^{\mathrm{FD}}$：蓄電池の充電効率，放電効率
+    \item $z_{k}$：充放電排他制約のための二値変数
+    \item $\bar{S}_{m}$：月 $m$ の基本料金を決定するデマンド目標値 [kW]
+    \item $w_{\mathrm{basic}}^{\mathrm{month}}$：月額基本料金単価 [円/kW/月]
+    \item $P^{\mathrm{BY}}$：電力量料金単価 [円/kWh]
+\end{itemize}
+
+過去実績年に含まれる $S^{\mathrm{BY}}_{k}$ は既知の定数として扱い，最適化対象年に含まれる $S^{\mathrm{BY}}_{k}$ は蓄電池運用により決定される変数として扱う．
+
+\subsection{蓄電池運用に関する制約}
+最適化対象年の各ステップ $k \in \mathcal{K}^{(2)}$ において，電力需給バランスを次式で表す．売電は行わないため，売電電力は0とした．
+
+\begin{equation}
+    g^{\mathrm{PV}}_{k}
+    + S^{\mathrm{BY}}_{k}
+    - x^{\mathrm{FC1}}_{k}
+    + x^{\mathrm{FD2}}_{k}
+    - d_{k}
+    - w_{k}
+    = 0,
+    \quad \forall k \in \mathcal{K}^{(2)}.
+\end{equation}
+
+PV使用量は利用可能PV発電量を超えない．
+
+\begin{equation}
+    0 \leq g^{\mathrm{PV}}_{k} \leq G^{\mathrm{PV}}_{k},
+    \quad \forall k \in \mathcal{K}^{(2)}.
+\end{equation}
+
+蓄電池SOCの状態遷移は以下の通りである．
+
+\begin{equation}
+    b^{\mathrm{F}}_{k}
+    =
+    b^{\mathrm{F}}_{k-1}
+    +
+    \left(
+    x^{\mathrm{FC2}}_{k}
+    -
+    x^{\mathrm{FD1}}_{k}
+    \right)\Delta t,
+    \quad \forall k \in \mathcal{K}^{(2)}.
+\end{equation}
+
+充放電効率 $\alpha^{\mathrm{FC}}=\alpha^{\mathrm{FD}}=0.98$ を用いて，変換前後の電力を次式で結ぶ．
+
+\begin{align}
+    x^{\mathrm{FC2}}_{k} & = \alpha^{\mathrm{FC}} x^{\mathrm{FC1}}_{k},
+    \quad \forall k \in \mathcal{K}^{(2)},                              \\
+    x^{\mathrm{FD2}}_{k} & = \alpha^{\mathrm{FD}} x^{\mathrm{FD1}}_{k},
+    \quad \forall k \in \mathcal{K}^{(2)}.
+\end{align}
+
+蓄電池容量を $b^{\mathrm{F}}_{\max}=860$\,kWh，最大充電出力を $a^{\mathrm{FC}}=400$\,kW，最大放電出力を $a^{\mathrm{FD}}=400$\,kWとし，SOC範囲と充放電出力を以下のように制限した．
+
+\begin{align}
+    0.05 b^{\mathrm{F}}_{\max}
+    \leq b^{\mathrm{F}}_{k}
+    \leq 0.95 b^{\mathrm{F}}_{\max},
+    \quad \forall k \in \mathcal{K}^{(2)}, \\
+    x^{\mathrm{FC2}}_{k} \leq a^{\mathrm{FC}},
+    \quad
+    x^{\mathrm{FD1}}_{k} \leq a^{\mathrm{FD}},
+    \quad \forall k \in \mathcal{K}^{(2)}.
+\end{align}
+
+充電と放電の同時実行を避けるため，十分大きな定数 $M$ と二値変数 $z_k$ を用いて次の制約を課した．
+
+\begin{align}
+    x^{\mathrm{FC1}}_{k} & \leq M z_k,
+    \quad \forall k \in \mathcal{K}^{(2)}, \\
+    x^{\mathrm{FD1}}_{k} & \leq M(1-z_k),
+    \quad \forall k \in \mathcal{K}^{(2)}.
+\end{align}
+
+\subsection{デマンド目標値制約}
+各月 $m$ のデマンド目標値 $\bar{S}_{m}$ は，当月を含む過去12か月間のすべての買電電力以上でなければならない．したがって，次の制約を課す．
+
+\begin{equation}
+    S^{\mathrm{BY}}_{k'} \leq \bar{S}_{m},
+    \quad \forall k' \in \mathcal{K}^{p}_{m},
+    \quad \forall m \in \{1,\dots,12\}.
+\end{equation}
+
+この制約により，過去実績期間に高い買電ピークが存在する場合には，最適化対象月の運用を変更しても $\bar{S}_{m}$ はその値より下がらない．一方で，過去12か月の参照範囲から高いピークが外れる月では，蓄電池運用によって新たなデマンド目標値を低減できる可能性が生じる．
+
+\subsection{過去12か月最大値で計算する方法の目的関数}
+目的関数は，最適化対象年に発生する基本料金と電力量料金の合計を最小化するものとする．
+
+\begin{equation}
+    \min
+    \left\{
+    \sum_{m=1}^{12}
+    \left(
+    w_{\mathrm{basic}}^{\mathrm{month}} \bar{S}_{m}
+    +
+    \sum_{k \in \mathcal{K}^{(2)}_{m}}
+    P^{\mathrm{BY}} S^{\mathrm{BY}}_{k} \Delta t
+    \right)
+    \right\}.
+\end{equation}
+
+ここで，括弧内の第1項は月 $m$ の基本料金，第2項は月 $m$ の電力量料金である．基本料金は月ごとのデマンド目標値に対して12回だけ加算され，30分ステップごとには加算しない．
+
+\subsection{比較対象：1年内最大値で計算する方法}
+比較対象として，1年内最大値で計算する方法も同じデータ・同じ蓄電池条件で計算した．この方法では，最適化対象の1年間だけを見て，その中で最も大きい買電電力を契約電力として扱う．数式上は，最適化対象年全体に対して最大買電電力変数 $S^{\mathrm{MAX}}$ を1つだけ定義し，
+
+\begin{equation}
+    S^{\mathrm{BY}}_{k} \leq S^{\mathrm{MAX}},
+    \quad \forall k \in \mathcal{K}^{(2)}
+\end{equation}
+
+を課す．目的関数は次式である．
+
+\begin{equation}
+    \min
+    \left\{
+    12 w_{\mathrm{basic}}^{\mathrm{month}} S^{\mathrm{MAX}}
+    +
+    \sum_{k \in \mathcal{K}^{(2)}}
+    P^{\mathrm{BY}} S^{\mathrm{BY}}_{k} \Delta t
+    \right\}.
+\end{equation}
+
+\section{計算結果}
+最適化計算を行った結果，従来の方法，デマンド目標値を置いた方法のいずれも最適解が得られた．両者の年間集計結果を表\ref{tab:comparison_results}に示す．
+
+\begin{table}[H]
+    \centering
+    \caption{基本料金の計算方法による比較}
+    \label{tab:comparison_results}
+    \begin{tabular}{lrr}
+        \toprule
+        評価項目               & 従来の方法      & デマンド目標値を置いた方法       \\
+        \midrule
+        年間電力量料金 [円]        & 11,354,515 & 11,354,053          \\
+        年間基本料金 [円]         & 4,815,077  & 4,815,039           \\
+        年間トータルコスト [円]      & 16,169,592 & \textbf{16,169,092} \\
+        最適化対象年の最大買電電力 [kW] & 166.83     & 166.83              \\
+        基本料金計算に使う最大値 [kW]  & 166.83     & 166.83              \\
+        計算時間 [秒]           & 127.87     & 125.74              \\
+        最適化ギャップ            & 0.00\%     & 0.00\%              \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+デマンド目標値を置いた方法では，従来の方法に比べて年間トータルコストが500円低くなった．
+
+月別のデマンド目標値，月内最大買電電力，基本料金および電力量料金を表\ref{tab:monthly_results}に示す．
+
+\begin{table}[H]
+    \centering
+    \caption{月別デマンド目標値と料金内訳}
+    \label{tab:monthly_results}
+    \begin{tabular}{lrrrr}
+        \toprule
+        月   & デマンド目標値 [kW] & 月内最大買電 [kW] & 基本料金 [円] & 電力量料金 [円] \\
+        \midrule
+        1月  & 166.83       & 128.00      & 401,256  & 423,688   \\
+        2月  & 166.83       & 128.00      & 401,256  & 261,782   \\
+        3月  & 166.83       & 140.00      & 401,256  & 360,067   \\
+        4月  & 166.83       & 164.00      & 401,256  & 617,564   \\
+        5月  & 166.83       & 164.00      & 401,256  & 858,737   \\
+        6月  & 166.83       & 166.83      & 401,256  & 1,133,010 \\
+        7月  & 166.83       & 166.83      & 401,256  & 1,839,136 \\
+        8月  & 166.83       & 166.83      & 401,256  & 2,138,411 \\
+        9月  & 166.83       & 166.83      & 401,256  & 1,429,235 \\
+        10月 & 166.83       & 166.83      & 401,244  & 1,090,550 \\
+        11月 & 166.83       & 142.00      & 401,244  & 659,325   \\
+        12月 & 166.83       & 122.00      & 401,244  & 542,549   \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\end{document}

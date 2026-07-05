@@ -1,4 +1,5 @@
 {
+  "objective_mode": "minimize_total_cost",
   "price_plan": "fixed_price",
   "fixed_price_yen_per_kWh": 21.51,
   "battery": {
