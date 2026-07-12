@@ -1,0 +1,219 @@
+% Build from 2026_Research/reports:
+% TEXMFVAR=/private/tmp/texmf-var TEXMFCACHE=/private/tmp/texmf-cache \
+%   latexmk -lualatex monthly_progress_report_202607.tex
+\documentclass[a4paper,11pt]{ltjsarticle}
+
+\usepackage[top=20mm, bottom=25mm, left=20mm, right=20mm]{geometry}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{multirow}
+\usepackage{xcolor}
+\usepackage{url}
+\usepackage{luatexja-fontspec}
+\setmainjfont{NotoSansJP-Regular.ttf}[
+    Path=/Users/yzhy/Library/Fonts/
+]
+
+\graphicspath{{../results/demand_target_sensitivity/figures/}}
+
+\title{今月の進捗報告\\[0.5em]\large デマンド目標値の有効条件に関するMILP感度分析}
+\author{神戸大学大学院システム情報学研究科 修士1年\\山崎博之}
+\date{2026年7月}
+
+\begin{document}
+
+\maketitle
+
+\section{背景と今月の問い}
+
+6月の月次報告では，当月を含む直近12か月の最大買電電力を月別の基本料金に反映する最適化モデルを定式化した．しかし，6月時点の比較では，従来法と履歴考慮法の費用差が小さく，デマンド目標値を考慮する意義を十分に説明できていなかった．
+
+7月は，まずモデル条件の不一致を解消し，6月の費用差を再検証した．その上で，過去ピークの高さ，契約電力に影響し続ける期間，および外部から与えるデマンド目標値を独立に変化させ，どの条件で費用と蓄電池運用が変化するかを検討した．
+
+\section{6月結果の再検証}
+
+6月の比較コードを確認したところ，従来モデルの蓄電池SOC更新式だけに，毎30分のSOCに対する保持係数0.99999が含まれていた．一方，履歴考慮モデルではこの係数を用いていなかった．そのため，旧結果は料金制度だけでなく，SOCモデル自体が異なる条件での比較となっていた．
+
+保持係数0.99999を削除し，両モデルのSOC更新式を統一して再計算した結果を表\ref{tab:recalculation}に示す．
+
+\begin{table}[H]
+    \centering
+    \caption{SOC条件統一後の年間費用比較}
+    \label{tab:recalculation}
+    \begin{tabular}{lrrr}
+        \toprule
+        評価項目 & 従来法 & 履歴考慮法 & 差分 \\
+        \midrule
+        年間電力量料金 [円] & 11,354,053 & 11,354,053 & 0 \\
+        年間基本料金 [円] & 4,814,924 & 4,814,924 & 0 \\
+        年間総費用 [円] & 16,168,978 & 16,168,978 & 0 \\
+        年間最大買電電力 [kW] & 166.826 & 166.826 & 0.000 \\
+        最適化ギャップ & 0.00\% & 0.00\% & --- \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+費用差は数値精度内で0円となった．したがって，旧結果の499円差はデマンド目標値の効果ではなく，主としてSOC更新式の不一致に起因していたと結論できる．
+
+\section{デマンド目標値と契約電力の分離}
+
+6月資料では，月別基本料金を決める変数を「デマンド目標値」と呼んでいた．しかし，現場運用で設定する目標値と，料金計算に用いる契約電力は異なる概念である．そこで7月のモデルでは，両者を次のように分離した．
+
+\begin{description}
+    \item[デマンド目標値 $T$]運用者が外部から与える30分買電電力の上限 [kW]．
+    \item[契約電力 $C_m$]月 $m$ を含む直近12か月の最大買電電力 [kW]．
+\end{description}
+
+時刻 $k$ の買電電力を $S_k^{\mathrm{BY}}$ とすると，外部目標値は次式で与える．
+
+\begin{equation}
+    S_k^{\mathrm{BY}} \leq T,
+    \quad \forall k \in \mathcal{K}^{(2)}.
+\end{equation}
+
+一方，契約電力は，月 $m$ の直近12か月に含まれる時間ステップ集合 $\mathcal{K}^{p}_{m}$ を用いて，
+
+\begin{equation}
+    S_{k'}^{\mathrm{BY}} \leq C_m,
+    \quad \forall k' \in \mathcal{K}^{p}_{m},
+    \quad \forall m \in \{1,\ldots,12\}
+\end{equation}
+
+と定義する．過去実績月の月別最大値は既知の定数とし，最適化対象年の月別最大買電電力は運用によって決まる変数とした．目的関数は月別基本料金と電力量料金の合計である．
+
+\begin{equation}
+    \min \left\{
+    \sum_{m=1}^{12} w_{\mathrm{basic}}^{\mathrm{month}} C_m
+    + \sum_{k \in \mathcal{K}^{(2)}}
+    P^{\mathrm{BY}} S_k^{\mathrm{BY}} \Delta t
+    \right\}.
+\end{equation}
+
+充電と放電の同時実行を禁止する二値変数を維持しているため，本モデルは厳密には線形計画法（LP）ではなく，混合整数線形計画法（MILP）である．
+
+\section{感度分析の条件}
+
+過去ピークの高さと残存期間を独立に設定するため，人工的な過去履歴を作成した．対象ピーク以外の過去月の最大買電電力は100\,kWに統一し，指定したピークが1，3，6，11か月だけ契約電力に影響するように発生月を配置した．
+
+\begin{table}[H]
+    \centering
+    \caption{感度分析の条件}
+    \label{tab:experiment_conditions}
+    \begin{tabular}{ll}
+        \toprule
+        項目 & 設定値 \\
+        \midrule
+        過去ピーク & 120，140，160，180\,kW \\
+        過去ピークの残存期間 & 1，3，6，11か月 \\
+        デマンド目標値 & なし，140，150，160，170，180\,kW \\
+        蓄電池容量 & 860\,kWh \\
+        最大充放電出力 & 400\,kW \\
+        充放電効率 & 0.98 \\
+        SOC範囲 & 5--95\% \\
+        初期SOC・終端SOC & 50\% ・ 50\% \\
+        基本料金単価 & 2,405.16円/kW/月 \\
+        電力量料金単価 & 21.51円/kWh \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+過去ピーク4水準，残存期間4水準，目標値6水準の組合せによる96ケースを計算した．さらに，6月報告で過去実績として使用したLP由来の買電系列に対し，同じ6水準の目標値を適用する参考ケースも計算した．
+
+従来の年末SOC使い切りによる見かけ上の費用削減を防ぐため，本感度分析では終端SOCを初期SOCと同値に制約した．
+
+\section{計算結果}
+
+\subsection{過去履歴が年間費用に与える影響}
+
+目標値を外部から与えない基準MILPの16条件では，年間総費用は15,284,559～16,525,672円となり，過去履歴条件による最大差は1,241,113円であった．図\ref{fig:history_cost}に，最小費用条件からの増加額を示す．
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.82\linewidth]{history_cost_heatmap.png}
+    \caption{過去ピークの高さと残存期間による年間費用の増加額}
+    \label{fig:history_cost}
+\end{figure}
+
+費用差の大部分は基本料金であり，16条件における基本料金の幅は1,243,928円であった．高い過去ピークが長く残る条件では，当面の買電ピークを抑制しても契約電力が下がらない．そのため，蓄電池スループットが最大6,479\,kWh減少し，充放電損失に伴う電力量料金が最大2,815円低下した．しかし，基本料金の増加が大きいため，年間総費用は増加した．
+
+\subsection{年間一定のデマンド目標値}
+
+目標値別の実行可能性を表\ref{tab:feasibility}に示す．人工履歴16条件のうち，140～160\,kWは全条件で実行不能となった．一方，170および180\,kWは全条件で実行可能であり，目標値を設定しない基準MILPの最適解と費用・運用ともに同一であった．
+
+\begin{table}[H]
+    \centering
+    \caption{デマンド目標値別の実行可能性}
+    \label{tab:feasibility}
+    \begin{tabular}{rrl}
+        \toprule
+        目標値 [kW] & 実行可能数 & 基準MILPとの関係 \\
+        \midrule
+        140 & 0/16 & 全履歴条件で実行不能 \\
+        150 & 0/16 & 全履歴条件で実行不能 \\
+        160 & 0/16 & 全履歴条件で実行不能 \\
+        170 & 16/16 & 基準最適解と同一 \\
+        180 & 16/16 & 基準最適解と同一 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.80\linewidth]{feasibility_map.png}
+    \caption{過去履歴条件とデマンド目標値に対する実行可能性}
+    \label{fig:feasibility}
+\end{figure}
+
+実行可能性が過去履歴によらないのは，過去履歴が契約電力と基本料金に影響する一方，将来年の需要，PV，蓄電池条件で決まる「物理的に達成可能な最低上限」は変えないためである．本条件では，基準MILPの年間最大買電電力は166.826\,kWであった．そのため，160\,kWは厳しすぎ，170\,kWはすでに基準最適解が満たす緩い制約となった．
+
+また，契約電力を目的関数に直接含む基準MILPは，目標値を設定しない状態で年間総費用を最小化している．この最適化問題に外部上限制約を追加しても，同じ目的関数の最適値をさらに下げることはできない．したがって，今回の「費用差0円」は計算上の失敗ではなく，定式化から得られる性質である．
+
+\subsection{代表条件の月別契約電力}
+
+過去ピークの高さを120および180\,kW，残存期間を1および11か月とした4つの代表条件について，月別契約電力を図\ref{fig:representative_contract}に示す．過去ピークが高く，残存期間が長いほど，月内の最大買電電力を抑制しても契約電力が低下しない期間が長くなる．
+
+\begin{figure}[H]
+    \centering
+    \begin{tabular}{cc}
+        \includegraphics[width=0.47\linewidth]{representative_cases/peak120_remain1_target170kW_monthly_contract.png} &
+        \includegraphics[width=0.47\linewidth]{representative_cases/peak120_remain11_target170kW_monthly_contract.png} \\
+        \includegraphics[width=0.47\linewidth]{representative_cases/peak180_remain1_target170kW_monthly_contract.png} &
+        \includegraphics[width=0.47\linewidth]{representative_cases/peak180_remain11_target170kW_monthly_contract.png}
+    \end{tabular}
+    \caption{過去ピークの高さと残存期間による月別契約電力の違い}
+    \label{fig:representative_contract}
+\end{figure}
+
+\section{検証結果}
+
+実験結果の整合性を確認するため，次の検証を行った．
+
+\begin{itemize}
+    \item 全実行可能解において，最適化ギャップは0.00\% であった．
+    \item 初期SOCと終端SOCの差は0.0\,kWhであった．
+    \item 同一時刻の充電と放電の同時実行は0件であった．
+    \item 実行可能な目標値に対する最大超過量は0.0\,kWであった．
+    \item 指定した過去ピークが1，3，6，11か月だけ契約電力に含まれ，その翌月に失効することを小規模テストで確認した．
+\end{itemize}
+
+計算にはPySCIPOpt 5.5.0，SCIP 9.2.1を用いた．102ケースのソルバ計算時間の合計は1,200.7秒，1ケースの最大計算時間は74.3秒であった．基準最適解が追加する目標値をすでに満たす場合は，追加制約後も同一解が最適であることが数学的に保証されるため，対応する結果を再利用した．
+
+\section{結論と次の検討}
+
+本感度分析により，過去ピークの高さと残存期間は，年間基本料金に大きな影響を与えることが確認できた．一方，今回用いた年間一定のデマンド目標値では，「厳しすぎて実行不能」または「緩すぎて基準最適解を変えない」のいずれかとなった．
+
+したがって，デマンド目標値の価値をさらに検討するためには，年間で一定の値を用いるのではなく，過去ピークが直近12か月の参照範囲から外れる月に合わせて変化する月別目標値 $T_m$ を定式化する必要がある．また，本条件の実行可能境界である166.83\,kW付近を0.1\,kW以下の刻みで詳細化し，需要・PV予測誤差を考慮した安全余裕の設計につなげる．
+
+\subsection*{フードテクノ社への確認事項}
+
+\begin{enumerate}
+    \item 現場実測の直近12か月の月別最大デマンドと発生時刻を評価に利用できるか．
+    \item 現場で設定しているデマンド目標値，警報値，および超過時の制御・例外ルール．
+    \item 需要・PV予測の更新間隔と，実運用時に利用可能な予測期間．
+    \item 正式約款上の検針日・請求締め日と，研究モデルの月次評価との対応．
+\end{enumerate}
+
+\end{document}
