@@ -1,21 +1,13 @@
-% Build from 2026_Research/reports:
-% TEXMFVAR=/private/tmp/texmf-var TEXMFCACHE=/private/tmp/texmf-cache \
-%   latexmk -lualatex monthly_progress_report_202607.tex
-\documentclass[a4paper,11pt]{ltjsarticle}
+\documentclass[a4paper,11pt,dvipdfmx]{jsarticle}
 
 \usepackage[top=20mm, bottom=25mm, left=20mm, right=20mm]{geometry}
+\usepackage{url}
 \usepackage{graphicx}
 \usepackage{amssymb}
 \usepackage{amsmath}
 \usepackage{booktabs}
 \usepackage{float}
 \usepackage{multirow}
-\usepackage{xcolor}
-\usepackage{url}
-\usepackage{luatexja-fontspec}
-\setmainjfont{NotoSansJP-Regular.ttf}[
-    Path=/Users/yzhy/Library/Fonts/
-]
 
 \graphicspath{{../results/demand_target_sensitivity/figures/}}
 
@@ -45,13 +37,13 @@
     \label{tab:recalculation}
     \begin{tabular}{lrrr}
         \toprule
-        評価項目 & 従来法 & 履歴考慮法 & 差分 \\
+        評価項目          & 従来法        & 履歴考慮法      & 差分    \\
         \midrule
-        年間電力量料金 [円] & 11,354,053 & 11,354,053 & 0 \\
-        年間基本料金 [円] & 4,814,924 & 4,814,924 & 0 \\
-        年間総費用 [円] & 16,168,978 & 16,168,978 & 0 \\
-        年間最大買電電力 [kW] & 166.826 & 166.826 & 0.000 \\
-        最適化ギャップ & 0.00\% & 0.00\% & --- \\
+        年間電力量料金 [円]   & 11,354,053 & 11,354,053 & 0     \\
+        年間基本料金 [円]    & 4,814,924  & 4,814,924  & 0     \\
+        年間総費用 [円]     & 16,168,978 & 16,168,978 & 0     \\
+        年間最大買電電力 [kW] & 166.826    & 166.826    & 0.000 \\
+        最適化ギャップ       & 0.00\%     & 0.00\%     & ---   \\
         \bottomrule
     \end{tabular}
 \end{table}
@@ -104,18 +96,18 @@
     \label{tab:experiment_conditions}
     \begin{tabular}{ll}
         \toprule
-        項目 & 設定値 \\
+        項目          & 設定値                        \\
         \midrule
-        過去ピーク & 120，140，160，180\,kW \\
-        過去ピークの残存期間 & 1，3，6，11か月 \\
-        デマンド目標値 & なし，140，150，160，170，180\,kW \\
-        蓄電池容量 & 860\,kWh \\
-        最大充放電出力 & 400\,kW \\
-        充放電効率 & 0.98 \\
-        SOC範囲 & 5--95\% \\
-        初期SOC・終端SOC & 50\% ・ 50\% \\
-        基本料金単価 & 2,405.16円/kW/月 \\
-        電力量料金単価 & 21.51円/kWh \\
+        過去ピーク       & 120，140，160，180\,kW        \\
+        過去ピークの残存期間  & 1，3，6，11か月                 \\
+        デマンド目標値     & なし，140，150，160，170，180\,kW \\
+        蓄電池容量       & 860\,kWh                   \\
+        最大充放電出力     & 400\,kW                    \\
+        充放電効率       & 0.98                       \\
+        SOC範囲       & 5--95\%                    \\
+        初期SOC・終端SOC & 50\% ・ 50\%                \\
+        基本料金単価      & 2,405.16円/kW/月             \\
+        電力量料金単価     & 21.51円/kWh                 \\
         \bottomrule
     \end{tabular}
 \end{table}
@@ -151,11 +143,11 @@
         \toprule
         目標値 [kW] & 実行可能数 & 基準MILPとの関係 \\
         \midrule
-        140 & 0/16 & 全履歴条件で実行不能 \\
-        150 & 0/16 & 全履歴条件で実行不能 \\
-        160 & 0/16 & 全履歴条件で実行不能 \\
-        170 & 16/16 & 基準最適解と同一 \\
-        180 & 16/16 & 基準最適解と同一 \\
+        140      & 0/16  & 全履歴条件で実行不能 \\
+        150      & 0/16  & 全履歴条件で実行不能 \\
+        160      & 0/16  & 全履歴条件で実行不能 \\
+        170      & 16/16 & 基準最適解と同一   \\
+        180      & 16/16 & 基準最適解と同一   \\
         \bottomrule
     \end{tabular}
 \end{table}
@@ -179,7 +171,7 @@
     \centering
     \begin{tabular}{cc}
         \includegraphics[width=0.47\linewidth]{representative_cases/peak120_remain1_target170kW_monthly_contract.png} &
-        \includegraphics[width=0.47\linewidth]{representative_cases/peak120_remain11_target170kW_monthly_contract.png} \\
+        \includegraphics[width=0.47\linewidth]{representative_cases/peak120_remain11_target170kW_monthly_contract.png}  \\
         \includegraphics[width=0.47\linewidth]{representative_cases/peak180_remain1_target170kW_monthly_contract.png} &
         \includegraphics[width=0.47\linewidth]{representative_cases/peak180_remain11_target170kW_monthly_contract.png}
     \end{tabular}
