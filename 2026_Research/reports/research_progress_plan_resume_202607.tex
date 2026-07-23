@@ -1,0 +1,259 @@
+\documentclass[a4paper,11pt,dvipdfmx]{jsarticle}
+
+\usepackage[top=20mm, bottom=25mm, left=20mm, right=20mm]{geometry}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{multirow}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usetikzlibrary{positioning}
+\pgfplotsset{compat=1.18}
+
+\newcommand{\term}[1]{#1}
+\newcommand{\LP}{\mathrm{LP}}
+\newcommand{\DP}{\mathrm{DP}}
+
+\title{研究進捗報告・研究計画\\[0.5em]\large 実際の料金制度に基づくEMSモデルの検証とLP・DPの比較}
+\author{神戸大学大学院システム情報学研究科 修士1年\\山崎博之}
+\date{2026年7月}
+
+\begin{document}
+
+\maketitle
+
+\section{研究背景}
+
+太陽光発電（PV）と蓄電池を有するエネルギーマネジメントシステム（EMS）では，
+需要電力，PV発電電力および蓄電池SOCの時間変化を考慮し，蓄電池の運用計画を最適化する必要がある．
+同一のEMS問題に対して線形計画法（LP）と動的計画法（DP）を適用し，
+解精度と計算時間に加え，どの程度大きなEMS問題まで各手法で扱えるかを比較したい．
+
+\section{これまでの進捗：実際の料金制度を反映したEMSモデル}
+
+\subsection{モデル化の内容}
+
+フードテクノエンジニアリング社からいただいた、とある1年間の需要，PV発電量および電力料金単価の30分値を入力し，
+電力需給バランスと蓄電池SOC等の制約の下で，各ステップにおける充放電量と買電電力を決定する
+年間運用計画モデルを構築した．最適化の対象期間は1年間とし，
+30分間隔の17,520ステップに分割した．
+目的関数は
+\begin{equation}
+  \min\left\{
+  \sum_{m=1}^{12}c^{\mathrm{B}}P_m^{\mathrm{CON}}
+  +\sum_{k=0}^{17519}c^{\mathrm{E}}P_k^{\mathrm{BUY}}\Delta t
+  \right\}
+  \label{eq:objective}
+\end{equation}
+とし，基本料金と電力量料金の年間合計を最小化する．ここで，
+$P_m^{\mathrm{CON}}$は月$m$に適用される契約電力，
+$P_k^{\mathrm{BUY}}$はステップ$k$における買電電力を表す．
+第1項は基本料金であり，$P_m^{\mathrm{CON}}$に力率補正後の基本料金単価
+$c^{\mathrm{B}}=2{,}405.16$円/kW/月を乗じ，12か月分を合計する．
+第2項は電力量料金であり，各ステップの買電電力$P_k^{\mathrm{BUY}}$を
+買電電力量$P_k^{\mathrm{BUY}}\Delta t$に換算し，電力量料金単価
+$c^{\mathrm{E}}=21.51$円/kWhを乗じて，1年間分を合計する．ここで，
+$\Delta t=0.5$\,hである．
+
+契約電力は次のように求める．まず，各月について，その月の買電電力の最大値を求める．
+次に，その値と過去11か月の月内最大買電電力を比較し，
+最も大きい値をその月の契約電力とする．
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[
+      block/.style={
+          rectangle,draw,rounded corners=1pt,
+          minimum width=25mm,minimum height=7mm,align=center,font=\small
+        },
+      flow/.style={->,thick},
+      label/.style={font=\footnotesize,fill=white,inner sep=1pt}
+    ]
+    \node[circle,fill,inner sep=1.5pt] (bus) {};
+    \node[block,left=28mm of bus] (grid) {系統電力};
+    \node[block,above=8mm of bus] (pv) {PV};
+    \node[block,right=28mm of bus] (load) {施設需要};
+    \node[block,below=13mm of bus] (battery) {蓄電池};
+
+    \draw[flow] (grid) -- node[label,above] {$P_k^{\mathrm{BUY}}$} (bus);
+    \draw[flow] (pv) -- node[label,right] {$P_k^{\mathrm{PV}}$} (bus);
+    \draw[flow] (bus) -- node[label,above] {$D_k$} (load);
+
+    \draw[flow] ([xshift=-3mm]bus.south)
+    -- node[label,left] {$P_k^{\mathrm{CH}}$}
+    ([xshift=-3mm]battery.north);
+    \draw[flow] ([xshift=3mm]battery.north)
+    -- node[label,right] {$P_k^{\mathrm{DIS}}$}
+    ([xshift=3mm]bus.south);
+  \end{tikzpicture}
+  \caption{対象システムの電力フローと記号の対応}
+  \label{fig:system_flow}
+\end{figure}
+
+\begin{table}[H]
+  \centering
+  \caption{モデルに設定した主な制約条件}
+  \label{tab:model_conditions}
+  \begin{tabular}{p{32mm}p{115mm}}
+    \toprule
+    分類 & 制約式                                                \\
+    \midrule
+    電力需給
+       & 買電電力 $+$ PV使用電力 $+$ 放電電力
+    $=$ 需要電力 $+$ 充電電力 \newline
+    $0\leq$ PV使用電力 $\leq$ PV発電電力，\qquad 買電電力 $\geq0$        \\
+    \addlinespace[3pt]
+    蓄電池残量
+       & 次ステップ残量
+    $=$ 現ステップ残量 $+$ 充電量 $-$ 放電量 \newline
+    $5\%\leq$ SOC $\leq95\%$，\qquad 初期SOC $=$ 終端SOC $=50\%$ \\
+    \addlinespace[3pt]
+    充放電
+       & $0\leq$ 充電出力 $\leq400$\,kW，\qquad
+    $0\leq$ 放電出力 $\leq400$\,kW                              \\
+    \addlinespace[3pt]
+    月内最大買電電力
+       & 各ステップの買電電力 $\leq$ その月の月内最大買電電力                     \\
+    \addlinespace[3pt]
+    契約電力
+       & 当月・過去11か月の各月内最大買電電力
+    $\leq$ その月の契約電力                                         \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+月内最大買電電力と契約電力は目的関数で最小化されるため，
+上記の制約を満たす最小値，すなわち各対象期間の最大値となる．
+なお，買電電力に指定上限は設けていない．
+
+\subsection{検証条件と結果}
+
+契約電力は，当月と過去11か月の月内最大買電電力のうち，
+最も大きい値によって決まる．このため，計算開始前11か月に記録された
+月内最大買電電力のうち最も大きい値も，契約電力の算定対象（12か月間）に残っている間は，
+契約電力と基本料金に影響する．そこで，この最大値の大きさと，
+算定対象から外れるまでの期間が年間電気料金に与える影響をそれぞれ確認するため，
+両者を独立に変化させた．計算開始前の最大買電電力を140，160，180\,kW，
+算定対象に残る期間を1，6，11か月とした
+$3\times3=9$ケースを計算した．
+
+\begin{center}
+  \begin{tabular}{c@{\qquad}rrr}
+    \toprule
+                 & \multicolumn{3}{c}{契約電力算定に残る期間}                     \\
+    \cmidrule(lr){2-4}
+    計算開始前の最大買電電力 & 1か月                             & 6か月     & 11か月    \\
+    \midrule
+    140\,kW      & 1,533.3                         & 1,576.1 & 1,576.1 \\
+    160\,kW      & 1,538.1                         & 1,604.9 & 1,606.3 \\
+    180\,kW      & 1,542.9                         & 1,633.8 & 1,652.6 \\
+    \bottomrule
+    \multicolumn{4}{r}{\small 年間電気料金［万円］}
+  \end{tabular}
+\end{center}
+
+料金差の大部分は基本料金に由来する．また，9ケースの計算時間は合計617.6秒，
+1ケース当たり最大74.3秒であった．以上より，計算開始前の最大買電電力は，
+その大きさだけでなく，契約電力算定に残る期間も年間料金を左右することを確認した．
+この料金計算に関する検証はここで一区切りとし，今後はLPとDPの比較を研究の中心とする．
+
+\section{研究計画：同一EMS問題に対するLPとDPの比較}
+
+\subsection{研究目的}
+
+同一の目的関数，制約条件および入力データを用いて，LP側と動的計画法（DP）を比較する．
+比較項目は，\term{解精度}，\term{計算時間}および\term{メモリ使用量}とし，
+さらに，どの程度大きなEMS問題まで各手法で扱えるかを確認する．
+単純に手法の優劣を決めるのではなく，
+問題条件に応じて各手法が適用可能となる範囲を整理することを目的とする．
+
+\subsection{現状と、比較に向けて考慮すべき点}
+
+\begin{center}
+  \begin{tabular}{p{30mm}p{62mm}p{62mm}}
+    \toprule
+    項目 & LP側                            & DP側 \\
+    \midrule
+    SOCの表現
+       & 連続変数として表現
+       & 離散状態として表現（5\%または1\%刻み）               \\
+    求解方法
+       & 数理最適化ソルバーで求解
+       & 例えばSOCを5\%刻みで表し，現在のSOCが50\%なら，
+    次ステップの候補を55\%（充電），50\%（充放電なし），
+    45\%（放電）として，それぞれの費用を計算                    \\
+    現在の計画期間
+       & 1年間（17,520ステップ）
+       & 1週間（336ステップ）                         \\
+    ピークの扱い
+       & 過去12か月に基づく契約電力を料金へ反映
+       & 現状は買電ピーク170\,kWの上限を設定                \\
+    \bottomrule
+  \end{tabular}
+\end{center}
+
+現時点では計画期間，SOC表現，ピークの扱いなどが異なるため，計算結果を直接比較できない．
+そこで，比較に向けて共通化する条件と，手法固有の違いとして残す項目を次のように整理する．
+
+共通化する条件：目的関数，入力データ，計画期間，蓄電池容量，
+最大充放電出力，初期・終端SOC．
+
+残す違い：LPではSOCと充放電量を連続値で表し，DPでは離散値で表すこと，
+および各手法の求解方法．
+
+以上のように，比較に不要な条件差はできるだけ減らし，
+連続表現と離散表現という手法固有の違いは残して比較する．
+
+\subsection{比較方法の検討}
+以下は、比較方法の一例である。
+\begin{center}
+  \begin{tabular}{p{30mm}p{52mm}p{72mm}}
+    \toprule
+    比較軸 & 設定例                          & 確認する内容 \\
+    \midrule
+    DPのSOC離散化幅
+        & 10\%，5\%，1\%
+        & LPとDPの費用誤差と、DPの状態数・計算量の関係             \\
+    計画期間
+        & 1週間，1か月，1年間
+        & 時間方向の規模拡大に対する計算時間とメモリ                 \\
+    蓄電池条件
+        & 容量，最大充放電出力（DPであれば、SOCの最大増減幅）
+        & 変化に対する感度                              \\
+    \bottomrule
+  \end{tabular}
+\end{center}
+
+LP側の目的関数値を $J_{\mathrm{LP}}$，DP側を $J_{\mathrm{DP}}$ とし，
+解精度は例えば
+\begin{equation}
+  \text{費用ギャップ}=
+  \frac{J_{\mathrm{DP}}-J_{\mathrm{LP}}}{J_{\mathrm{LP}}}\times100\ [\%]
+  \label{eq:gap}
+\end{equation}
+で評価する．
+
+\subsection{実施手順と到達目標}
+
+\begin{enumerate}
+  \item \term{比較条件の整理}：
+        目的関数の構成，入力データ，計画期間および蓄電池条件を共通化し，
+        連続表現と離散表現の違いは残す．
+  \item \term{小規模問題による検証}：
+        1週間程度の問題でDPの離散化幅を変え，費用ギャップと計算負荷を確認する．
+  \item \term{問題規模の拡大}：
+        計画期間を1か月，1年間へ延長し，状態数・変数数の増加に対する挙動を調べる．
+  \item \term{適用範囲の整理}：
+        精度，計算時間，メモリの結果と，どの程度大きなEMS問題まで各手法で扱えるかを踏まえ，
+        各手法を使用できる条件を整理する．
+\end{enumerate}
+
+\noindent
+到達目標：
+高精度な基準解が必要な場合，短時間で逐次的に解く場合，状態・制約を追加する場合など，
+EMS問題の条件に応じてLPとDPをどのように使い分けるべきかを示す．
+
+\end{document}
