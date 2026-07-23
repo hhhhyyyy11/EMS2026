@@ -250,6 +250,7 @@ def solve_demand_target_lp(
     demand_target_kw: float | None = None,
     past_monthly_peaks: Dict | None = None,
     enforce_terminal_soc: bool = True,
+    objective_mode: str = "total_cost",
 ):
     from pyscipopt import Model, quicksum
 
@@ -259,6 +260,8 @@ def solve_demand_target_lp(
     k_future = len(future_df)
     if k_future == 0:
         raise ValueError("future_df is empty.")
+    if objective_mode not in {"total_cost", "minimize_grid_peak"}:
+        raise ValueError(f"Unsupported objective_mode: {objective_mode}")
 
     future_months = future_month_periods(future_df.index)
     reference_sets = build_reference_sets(past_df.index, future_df.index, future_months)
@@ -312,6 +315,7 @@ def solve_demand_target_lp(
         month: model.addVar(vtype="C", name=f"contract_power_{month_label(month)}", lb=0.0)
         for month in future_months
     }
+    annual_grid_peak = model.addVar(vtype="C", name="annual_grid_peak", lb=0.0)
 
     for k in range(k_future):
         model.addCons(
@@ -368,6 +372,7 @@ def solve_demand_target_lp(
 
     for k, month in enumerate(future_step_month):
         model.addCons(s_by[k] <= monthly_peak[month])
+        model.addCons(s_by[k] <= annual_grid_peak)
 
     past_periods = sorted(past_monthly_peaks)
     for month in future_months:
@@ -385,7 +390,10 @@ def solve_demand_target_lp(
     energy_cost = quicksum(
         prices[k] * s_by[k] * DELTA_T_HOURS for k in range(k_future)
     )
-    model.setObjective(basic_cost + energy_cost, "minimize")
+    if objective_mode == "minimize_grid_peak":
+        model.setObjective(annual_grid_peak, "minimize")
+    else:
+        model.setObjective(basic_cost + energy_cost, "minimize")
 
     start = time.perf_counter()
     model.optimize()
@@ -436,9 +444,11 @@ def solve_demand_target_lp(
         "s_bar": contract_power_values,
         "demand_target_kw": demand_target_kw,
         "enforce_terminal_soc": enforce_terminal_soc,
+        "objective_mode": objective_mode,
         "past_monthly_peaks": {month_label(k): float(v) for k, v in past_monthly_peaks.items()},
         "prices": prices,
         "objective_value": model.getObjVal(),
+        "minimum_annual_grid_peak_kw": float(model.getVal(annual_grid_peak)),
         "gap": model.getGap() if status != "optimal" else 0.0,
     }
 

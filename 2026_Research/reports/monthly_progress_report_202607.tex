@@ -8,10 +8,12 @@
 \usepackage{booktabs}
 \usepackage{float}
 \usepackage{multirow}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usetikzlibrary{positioning}
+\pgfplotsset{compat=1.18}
 
-\graphicspath{{../results/demand_target_sensitivity/figures/}}
-
-\title{今月の進捗報告\\[0.5em]\large デマンド目標値を用いたEMS運用手法の感度分析}
+\title{今月の進捗報告\\[0.5em]\large 前年の月内最大買電電力が年間電気料金に与える影響}
 \author{神戸大学大学院システム情報学研究科 修士1年\\山崎博之}
 \date{2026年7月}
 
@@ -21,146 +23,220 @@
 
 \section{背景と目的}
 
-高圧電力契約の基本料金は，各月の契約電力に基本料金単価を乗じて算定される．本研究では，月 $m$ の契約電力を，当月を含む直近12か月に発生した30分平均需要電力の最大値として計算する．このため，2026年の蓄電池運用を決める際には，2026年の需要とPV発電量だけでなく，2025年の各月に発生した最大需要電力も基本料金に影響する．
+高圧電力契約の基本料金は，各月の契約電力に基本料金単価を乗じて算定される．契約電力算定では，当月を含む直近12か月それぞれの月内最大買電電力を比較し，そのうち最も大きい値を当月の契約電力とする．このため，2026年の蓄電池運用を決める際には，2026年の需要とPV発電量だけでなく，2025年各月の月内最大買電電力も基本料金に影響する．
 
-以下では，計画開始前の各月に記録された30分平均需要電力の最大値を\textbf{過去月最大需要電力}と呼ぶ．たとえば，2025年12月の過去月最大需要電力は，2026年1月から11月までの契約電力算定に含まれ，2026年12月の算定から外れる．したがって，同じ大きさの過去月最大需要電力であっても，それが何か月間契約電力に含まれ続けるかによって，2026年の運用に対する影響が異なる．
+たとえば，2025年12月の月内最大買電電力は，2026年1月から11月までの契約電力算定に含まれ，2026年12月の算定から外れる．したがって，同じ大きさの月内最大買電電力であっても，それが記録された月によって，2026年の契約電力算定に含まれ続ける期間が異なる．
 
-本報告では，過去月最大需要電力の大きさと，その値が2026年の契約電力算定に含まれ続ける月数を変化させる．さらに，買電電力に対するデマンド目標値を設定し，各条件が年間電気料金と蓄電池運用に与える影響をMILPにより評価する．
+今回は，2025年の月内最大買電電力の大きさと，その値が2026年の契約電力算定に含まれ続ける月数を変化させ，年間基本料金，年間電力量料金および年間電気料金に与える影響を調査した．これにより，過去の月内最大買電電力の大きさだけでなく，契約電力算定に残る期間を考慮する必要性を明らかにする．
 
 \section{対象期間と集合}
 
-運用計画の対象期間は2026年1月1日0時から12月31日23時30分までの1年間とし，時間間隔は $\Delta t=0.5$\,hとする．需要電力とPV発電電力には，既存の2025年の30分値データを2026年の同月・同時刻に対応させて用いる．これらの値と電力量料金単価は，すべての30分時間帯に対して既知とし，1年間の蓄電池充放電計画を一括で決定する．
+運用計画の対象期間は2026年1月1日0時0分～12月31日23時30分とし，時間間隔は $\Delta t=0.5$\,hとする．需要電力とPV発電電力には，既存の2025年の30分値データを2026年の同月・同時刻に対応させて用いる．これらの値と電力量料金単価は，すべての30分時間帯に対して既知であり，1年間の蓄電池充放電計画を一括で決定する．
 
-月と30分時間帯の粒度を区別するため，次の集合を定義する．
+次の集合を定義する．
 
 \begin{itemize}
-    \item $\mathcal{M}=\{1,\ldots,12\}$：2026年の月の集合．月の添字に $m$ を用いる．
-    \item $\mathcal{K}=\{1,\ldots,17520\}$：2026年の30分時間帯の集合．時間帯の添字に $k$ を用いる．
+    \item $\mathcal{M}=\{1,\ldots,12\}$：年によらない月番号の集合．最適化対象年である2026年の月の添字に $m$ を用いる．
+    \item $\mathcal{K}=\{0,\ldots,17519\}$：2026年の30分時間帯の集合．時間帯の添字に $k$ を用いる．
     \item $\mathcal{K}_m \subset \mathcal{K}$：2026年の月 $m$ に属する30分時間帯の集合．
-    \item $\mathcal{P}_m$：月 $m$ の契約電力算定に含まれる，2025年の過去月の集合．
-    \item $\mathcal{F}_m=\{j\in\mathcal{M}\mid j\leq m\}$：月 $m$ の契約電力算定に含まれる，2026年の月の集合．
+    \item $\mathcal{M}_m^{2025}=\{j\in\mathcal{M}\mid m<j\}$：2026年の月 $m$ の契約電力算定に含まれる，2025年の月番号の集合．
+    \item $\mathcal{M}_m^{2026}=\{j\in\mathcal{M}\mid j\leq m\}$：2026年の月 $m$ の契約電力算定に含まれる，2026年の月番号の集合．
 \end{itemize}
+% 「SOCを表す時点の集合」ってどういう意味
 
-たとえば，2026年1月の契約電力は2025年2月から12月と2026年1月を参照するため，$\mathcal{P}_1$ は2025年2--12月，$\mathcal{F}_1=\{1\}$ である．2026年12月には2025年の値を参照せず，$\mathcal{P}_{12}=\emptyset$，$\mathcal{F}_{12}=\mathcal{M}$ となる．この定義により，月の添字 $m$ と30分時間帯の添字 $k$ の対応を明示する．
+たとえば，2026年1月の契約電力は2025年2月から12月と2026年1月を参照するため，$\mathcal{M}_1^{2025}=\{2,\ldots,12\}$，$\mathcal{M}_1^{2026}=\{1\}$ である．2026年12月には2025年の値を参照せず，$\mathcal{M}_{12}^{2025}=\emptyset$，$\mathcal{M}_{12}^{2026}=\mathcal{M}$ となる．
 
-\section{MILPによるEMS運用手法}
+\section{運用手法}
 
-\subsection{変数と定数}
+\subsection{記号の定義}
 
-主な変数と定数を次のように定義する．
+本報告で用いる主な記号を表\ref{tab:symbols}に示す．対象システムと充放電電力の対応を図\ref{fig:system_flow}に示す．
 
-\begin{itemize}
-    \item $d_k$：需要電力 [kW]，$G_k^{\mathrm{PV}}$：利用可能PV発電電力 [kW]．
-    \item $S_k^{\mathrm{BY}}$：系統からの30分平均買電電力 [kW]．
-    \item $g_k^{\mathrm{PV}}$：使用するPV発電電力 [kW]．
-    \item $x_k^{\mathrm{C}}$：蓄電池への充電入力 [kW]，$x_k^{\mathrm{D}}$：蓄電池から需要側へ供給する放電電力 [kW]．
-    \item $B_k$：時間帯 $k$ 終了時の蓄電池SOC [kWh]，$z_k$：充放電モードを表す二値変数．
-    \item $Q_m$：2026年の月 $m$ における最大買電電力 [kW]．
-    \item $C_m$：2026年の月 $m$ に適用する契約電力 [kW]．
-    \item $H_p$：2025年の過去月 $p$ に記録された過去月最大需要電力 [kW]．これは既知の定数である．
-    \item $T$：運用者が指定するデマンド目標値 [kW]．
-\end{itemize}
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+            block/.style={rectangle,draw,minimum width=27mm,minimum height=9mm,align=center},
+            flow/.style={->,thick}
+        ]
+        \node[circle,fill,inner sep=1.5pt] (bus) {};
+        \node[block,left=30mm of bus] (grid) {系統電力};
+        \node[block,above=18mm of bus] (pv) {PV};
+        \node[block,right=30mm of bus] (load) {施設需要};
+        \node[block,below=18mm of bus] (converter) {電力変換器};
+        \node[block,below=11mm of converter] (battery) {蓄電池};
 
-ここで，デマンド目標値 $T$ は\textbf{電力量 [kWh] ではなく，30分平均の買電電力 [kW] に対する上限}である．電力量料金を計算する際には，$S_k^{\mathrm{BY}}$ に時間幅 $\Delta t=0.5$\,hを乗じ，各時間帯の買電電力量 [kWh] に変換する．
+        \draw[flow] (grid) -- node[above] {$s_k^{\mathrm{BY}}$} (bus);
+        \draw[flow] (pv) -- node[right] {$g_k^{\mathrm{P2}}$} (bus);
+        \draw[flow] (bus) -- node[above] {$d_k$} (load);
+        \draw[flow] ([xshift=-3mm]bus.south) -- node[left] {$x_k^{\mathrm{C1}}$} ([xshift=-3mm]converter.north);
+        \draw[flow] ([xshift=3mm]converter.north) -- node[right] {$x_k^{\mathrm{D2}}$} ([xshift=3mm]bus.south);
+        \draw[flow] ([xshift=-3mm]converter.south) -- node[left] {$x_k^{\mathrm{C2}}$} ([xshift=-3mm]battery.north);
+        \draw[flow] ([xshift=3mm]battery.north) -- node[right] {$x_k^{\mathrm{D1}}$} ([xshift=3mm]converter.south);
+    \end{tikzpicture}
+    \caption{対象システムの電力フローと充放電電力の定義}
+    \label{fig:system_flow}
+\end{figure}
+
+\begin{table}[H]
+    \centering
+    \small
+    \caption{主な記号}
+    \label{tab:symbols}
+    \begin{tabular}{c p{92mm} c}
+        \toprule
+        記号                                            & 定義                            & 単位     \\
+        \midrule
+        \multicolumn{3}{l}{決定変数}                                                               \\
+        $s_k^{\mathrm{BY}}$                           & 時間帯 $k$ の30分平均買電電力            & kW     \\
+        $g_k^{\mathrm{P2}}$                           & 実際に使用するPV発電電力                 & kW     \\
+        $x_k^{\mathrm{C1}},x_k^{\mathrm{C2}}$         & 充電電力（変換前／変換後）                 & kW     \\
+        $x_k^{\mathrm{D1}},x_k^{\mathrm{D2}}$         & 放電電力（変換前／変換後）                 & kW     \\
+        $b_k$                                         & 時点 $k$ の蓄電池SOC                & kWh    \\
+        $z_k$                                         & 充放電モード（$1$：充電，$0$：放電）         & --     \\
+        $s_m^{2026}$                                  & 2026年の月 $m$ における月内最大買電電力      & kW     \\
+        $s_m^{\mathrm{CON}}$                          & 2026年の月 $m$ に適用する契約電力         & kW     \\
+        \midrule
+        \multicolumn{3}{l}{既知パラメータ}                                                            \\
+        $d_k$                                         & 需要電力                          & kW     \\
+        $g_k^{\mathrm{P1}}$                           & 利用可能なPV発電電力                   & kW     \\
+        $s_m^{2025}$                                  & 2025年の月 $m$ における月内最大買電電力（実績値） & kW     \\
+        $p^{\mathrm{BY}}$                             & 買電電力量単価                       & 円/kWh  \\
+        \midrule
+        \multicolumn{3}{l}{定数}                                                                 \\
+        $\Delta t$                                    & 1ステップの長さ（$=0.5$）              & h      \\
+        $\alpha$                                      & 充電および放電効率（$=0.98$）            & --     \\
+        $C$                                           & 蓄電池定格容量（$=860$）               & kWh    \\
+        $P_{\max}^{\mathrm{C}},P_{\max}^{\mathrm{D}}$ & 最大充電および放電出力（$=400$）           & kW     \\
+        $p^{\mathrm{B}}$                              & 力率補正後の月額基本料金単価（$=2{,}405.16$） & 円/kW/月 \\
+        \bottomrule
+    \end{tabular}
+
+\end{table}
 
 \subsection{蓄電池運用の制約}
 
 各 $k\in\mathcal{K}$ における電力需給バランスを
 
 \begin{equation}
-    g_k^{\mathrm{PV}}+S_k^{\mathrm{BY}}-x_k^{\mathrm{C}}+x_k^{\mathrm{D}}=d_k,
+    g_k^{\mathrm{P2}}+s_k^{\mathrm{BY}}+x_k^{\mathrm{D2}}
+    =d_k+x_k^{\mathrm{C1}},
     \quad \forall k\in\mathcal{K}
 \end{equation}
 
 とする．PV使用電力は
 
 \begin{equation}
-    0\leq g_k^{\mathrm{PV}}\leq G_k^{\mathrm{PV}},
+    0\leq g_k^{\mathrm{P2}}\leq g_k^{\mathrm{P1}},
     \quad \forall k\in\mathcal{K}
 \end{equation}
 
 を満たす．また，売電を行わないため，買電電力，月内最大買電電力および契約電力は非負とする．
 
 \begin{equation}
-    S_k^{\mathrm{BY}}\geq0,\quad Q_m\geq0,\quad C_m\geq0,
+    s_k^{\mathrm{BY}}\geq0,\quad
+    s_m^{2026}\geq0,\quad s_m^{\mathrm{CON}}\geq0,
     \quad \forall k\in\mathcal{K},\ \forall m\in\mathcal{M}.
 \end{equation}
 
-充電効率を $\eta^{\mathrm{C}}=0.98$，放電効率を $\eta^{\mathrm{D}}=0.98$ とし，SOC更新式を
+充電および放電効率を $\alpha=0.98$ とし，変換前後の電力の関係を
+
+\begin{align}
+    x_k^{\mathrm{C2}} & =\alpha x_k^{\mathrm{C1}},
+                      &                            & \forall k\in\mathcal{K}, \\
+    x_k^{\mathrm{D2}} & =\alpha x_k^{\mathrm{D1}},
+                      &                            & \forall k\in\mathcal{K}
+\end{align}
+
+とする．SOC更新式は
 
 \begin{equation}
-    B_k=B_{k-1}+\eta^{\mathrm{C}}x_k^{\mathrm{C}}\Delta t
-    -\frac{x_k^{\mathrm{D}}}{\eta^{\mathrm{D}}}\Delta t,
+    b_{k+1}
+    =b_k+
+    \left(x_k^{\mathrm{C2}}-x_k^{\mathrm{D1}}\right)\Delta t,
     \quad \forall k\in\mathcal{K}
 \end{equation}
 
-とする．蓄電池容量を $B^{\max}=860$\,kWh，最大充放電出力を $P^{\mathrm{C}}=P^{\mathrm{D}}=400$\,kW とし，
+とする．蓄電池容量を $C=860$\,kWh，最大充放電出力を $P_{\max}^{\mathrm{C}}=P_{\max}^{\mathrm{D}}=400$\,kW とし，
 
 \begin{align}
-    0.05B^{\max}           & \leq B_k\leq0.95B^{\max},                         &  & \forall k\in\mathcal{K}, \\
-    0\leq x_k^{\mathrm{C}} & \leq \frac{P^{\mathrm{C}}}{\eta^{\mathrm{C}}}z_k, &  & \forall k\in\mathcal{K}, \\
-    0\leq x_k^{\mathrm{D}} & \leq \eta^{\mathrm{D}}P^{\mathrm{D}}(1-z_k),      &  & \forall k\in\mathcal{K}, \\
-    z_k                    & \in\{0,1\},                                       &  & \forall k\in\mathcal{K}
+    0.05C
+        & \leq b_k\leq0.95C,
+        &                                    & k=0,\ldots,17520,        \\
+    0\leq x_k^{\mathrm{C2}}
+        & \leq P_{\max}^{\mathrm{C}}z_k,
+        &                                    & \forall k\in\mathcal{K}, \\
+    0\leq x_k^{\mathrm{D1}}
+        & \leq P_{\max}^{\mathrm{D}}(1-z_k),
+        &                                    & \forall k\in\mathcal{K}, \\
+    z_k & \in\{0,1\},
+        &                                    & \forall k\in\mathcal{K}
 \end{align}
 
 を課す．また，年末の蓄電池使い切りによる影響を除くため，初期SOCと終端SOCをともに容量の50\% に固定する．
 
 \begin{equation}
-    B_0=B_{17520}=0.5B^{\max}.
+    b_0=b_{17520}=0.5C.
 \end{equation}
 
-\subsection{デマンド目標値と契約電力}
+\subsection{月内最大買電電力と契約電力}
 
-デマンド目標値を指定する手法では，全ての30分時間帯の買電電力に
-
-\begin{equation}
-    \label{eq:demand_target}
-    S_k^{\mathrm{BY}}\leq T,
-    \quad \forall k\in\mathcal{K}
-\end{equation}
-
-を課す．月 $m$ の月内最大買電電力 $Q_m$ は，月 $m$ に属する30分時間帯との対応を明示して
+$s_m^{2026}$ は，2026年の月 $m$ における月内最大買電電力なので
 
 \begin{equation}
-    S_k^{\mathrm{BY}}\leq Q_m,
+    s_k^{\mathrm{BY}}\leq s_m^{2026},
     \quad \forall m\in\mathcal{M},\ \forall k\in\mathcal{K}_m
 \end{equation}
 
-と定義する．月 $m$ の契約電力 $C_m$ は，契約電力算定に含まれる2025年の過去月最大需要電力 $H_p$ と，2026年の月内最大買電電力 $Q_j$ の両方以上となるように，
-
-\begin{align}
-    H_p & \leq C_m, &  & \forall m\in\mathcal{M},\ \forall p\in\mathcal{P}_m, \\
-    Q_j & \leq C_m, &  & \forall m\in\mathcal{M},\ \forall j\in\mathcal{F}_m
-\end{align}
-
-を課す．基本料金単価を $r^{\mathrm{B}}=2{,}405.16$ 円/kW/月，電力量料金単価を $r_k^{\mathrm{E}}=21.51$ 円/kWh とし，目的関数を
+を満たす．当月を含む直近12か月それぞれの月内最大買電電力を比較し，そのうち最も大きい値を当月の契約電力とする．したがって，月 $m$ の契約電力 $s_m^{\mathrm{CON}}$ は，
 
 \begin{equation}
+    \label{eq:contract_rule}
+    s_m^{\mathrm{CON}}
+    =\max\left(
+    \{s_j^{2025}\mid j\in\mathcal{M}_m^{2025}\}
+    \cup
+    \{s_j^{2026}\mid j\in\mathcal{M}_m^{2026}\}
+    \right),
+    \quad \forall m\in\mathcal{M}
+\end{equation}
+
+と定められる．ただし，式\eqref{eq:contract_rule}は最大値演算を含むため，MILPの線形制約としてそのまま与えることはできない．そこで，$s_m^{\mathrm{CON}}$ を契約電力算定の対象となる全ての月内最大買電電力の上界とみなす．すなわち，2025年に属する月 $j$ の月内最大買電電力 $s_j^{2025}$ と2026年に属する月 $j$ の月内最大買電電力 $s_j^{2026}$ に対して，
+
+\begin{align}
+    s_j^{2025} & \leq s_m^{\mathrm{CON}},
+               &                          & \forall m\in\mathcal{M},\ \forall j\in\mathcal{M}_m^{2025}, \label{eq:contract_2025} \\
+    s_j^{2026} & \leq s_m^{\mathrm{CON}},
+               &                          & \forall m\in\mathcal{M},\ \forall j\in\mathcal{M}_m^{2026} \label{eq:contract_2026}
+\end{align}
+
+を課す．基本料金単価を $p^{\mathrm{B}}=2{,}405.16$ 円/kW/月，買電電力量単価を $p^{\mathrm{BY}}=21.51$ 円/kWh とし，目的関数を
+
+\begin{equation}
+    \label{eq:objective}
     \min\left\{
-    \sum_{m\in\mathcal{M}}r^{\mathrm{B}}C_m
+    \sum_{m\in\mathcal{M}}p^{\mathrm{B}}s_m^{\mathrm{CON}}
     +
-    \sum_{k\in\mathcal{K}}r_k^{\mathrm{E}}S_k^{\mathrm{BY}}\Delta t
+    \sum_{k\in\mathcal{K}}p^{\mathrm{BY}}s_k^{\mathrm{BY}}\Delta t
     \right\}
 \end{equation}
 
-とする．以下では，式\eqref{eq:demand_target}のデマンド目標値制約を課さない計算を\textbf{目標値なし手法}，指定した $T$ を課す計算を\textbf{目標値指定手法}と呼ぶ．
+とする．式\eqref{eq:contract_2025}および式\eqref{eq:contract_2026}だけでは，$s_m^{\mathrm{CON}}$ は各月の月内最大買電電力以上であればよく，最大値より大きな値も許される．しかし，式\eqref{eq:objective}では正の係数 $p^{\mathrm{B}}$ を乗じた $s_m^{\mathrm{CON}}$ を最小化するため，最適解における $s_m^{\mathrm{CON}}$ はこれらの制約を満たす最小値，すなわち当月を含む直近12か月の月内最大買電電力の最大値となる．したがって，式\eqref{eq:contract_2025}，式\eqref{eq:contract_2026}および式\eqref{eq:objective}によって，契約電力算定式\eqref{eq:contract_rule}をMILP上で等価に表している．買電電力を抑制する水準は外部から与えず，契約電力を含む年間電気料金を最小化した結果として決定する．
 
-\section{感度分析の条件}
+\section{検証条件}
 
-過去月最大需要電力の大きさと，その値が2026年の契約電力に影響する期間を独立に設定するため，2025年の月別最大需要電力を人工的に作成した．注目する1か月以外の月別最大需要電力はすべて100\,kWとし，注目する月のみを120，140，160，180\,kWのいずれかに設定した．
+2025年の月内最大買電電力の大きさと，その値が2026年の契約電力に影響する期間を独立に設定するため，2025年の月内最大買電電力を人工的に作成した．注目する1か月以外の月内最大買電電力は全て100\,kWとし，注目する月のみを140，160，180\,kWのいずれかに設定した．
 
-契約電力は当月を含む直近12か月を参照するため，2025年のどの月に大きな月別最大需要電力を設定するかによって，2026年の契約電力に含まれる月数が変化する．具体的な設定を表\ref{tab:remaining_months}に示す．
+契約電力は当月を含む直近12か月を参照するため，2025年のどの月に大きな月内最大買電電力を設定するかによって，2026年の契約電力算定に含まれる月数が変化する．具体的な設定を表\ref{tab:remaining_months}に示す．
 
 \begin{table}[H]
     \centering
-    \caption{過去月最大需要電力の設定月と契約電力への影響期間}
+    \caption{2025年の月内最大買電電力の設定月と契約電力への影響期間}
     \label{tab:remaining_months}
     \begin{tabular}{c p{52mm} p{55mm}}
         \toprule
-        影響期間 & 大きな月別最大需要電力を設定する月 & 2026年の契約電力に含まれる月 \\
+        影響期間 & 大きな月内最大買電電力を設定する月 & 2026年の契約電力に含まれる月 \\
         \midrule
         1か月  & 2025年2月           & 2026年1月          \\
-        3か月  & 2025年4月           & 2026年1--3月       \\
         6か月  & 2025年7月           & 2026年1--6月       \\
         11か月 & 2025年12月          & 2026年1--11月      \\
         \bottomrule
@@ -169,118 +245,187 @@
 
 \begin{table}[H]
     \centering
-    \caption{感度分析の条件}
+    \caption{検証条件}
     \label{tab:experiment_conditions}
     \begin{tabular}{ll}
         \toprule
-        項目             & 設定値                        \\
+        項目             & 設定値             \\
         \midrule
-        2025年の月別最大需要電力 & 120，140，160，180\,kW        \\
-        契約電力への影響期間     & 1，3，6，11か月                 \\
-        デマンド目標値        & なし，140，150，160，170，180\,kW \\
-        蓄電池容量          & 860\,kWh                   \\
-        最大充放電出力        & 400\,kW                    \\
-        充放電効率          & 0.98                       \\
-        SOC範囲          & 5--95\%                    \\
-        初期SOC・終端SOC    & 50\% ・ 50\%                \\
-        基本料金単価         & 2,405.16円/kW/月             \\
-        電力量料金単価        & 21.51円/kWh                 \\
+        2025年の月内最大買電電力 & 140，160，180\,kW \\
+        契約電力への影響期間     & 1，6，11か月        \\
+        その他の月内最大買電電力   & 100\,kW         \\
+        蓄電池容量          & 860\,kWh        \\
+        最大充放電出力        & 400\,kW         \\
+        充放電効率          & 0.98            \\
+        SOC範囲          & 5--95\%         \\
+        初期SOC・終端SOC    & 50\%・50\%       \\
+        基本料金単価         & 2,405.16円/kW/月  \\
+        電力量料金単価        & 21.51円/kWh      \\
         \bottomrule
     \end{tabular}
 \end{table}
 
-2025年の月別最大需要電力4水準，契約電力への影響期間4水準，デマンド目標値6水準の組合せによる96ケースを計算した．
+2025年の月内最大買電電力3水準と契約電力への影響期間3水準の組合せによる9ケースを計算した．
 
 \section{計算結果}
 
-\subsection{過去月最大需要電力が年間費用に与える影響}
-
-デマンド目標値制約を課さない目標値なし手法の16条件では，年間総費用は15,284,559～16,525,672円となり，2025年の月別最大需要電力条件による最大差は1,241,113円であった．図\ref{fig:history_cost}に，最小費用条件からの増加額を示す．
+9ケースのうち，月内最大買電電力と影響期間が小・中・大となる3条件を図\ref{fig:representative_conditions}に示す．横軸は2025年の月，縦軸は各月の月内最大買電電力である．各段はそれぞれ別の計算条件を表し，注目月以外の月内最大買電電力は100\,kWに設定した．
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.82\linewidth]{history_cost_heatmap.png}
-    \caption{2025年の月別最大需要電力と契約電力への影響期間による年間費用の増加額}
-    \label{fig:history_cost}
+    \begin{tikzpicture}[x=0.66cm,y=0.025cm]
+        \foreach \offset/\peakmonth/\peakvalue/\duration in {5.4/2/140/1,2.7/7/160/6,0/12/180/11}{
+                \begin{scope}[yshift=\offset cm]
+                    \draw[->] (0,0) -- (12.4,0);
+                    \draw[->] (0,0) -- (0,90);
+                    \foreach \tick/\label in {0/100,40/140,80/180}{
+                            \draw (-0.12,\tick) -- (0.12,\tick);
+                            \node[anchor=east] at (-0.22,\tick) {\scriptsize \label};
+                        }
+                    \draw[densely dashed,black!45] (0.5,0) -- (11.5,0);
+                    \foreach \m in {1,...,12}{
+                            \draw ({\m-0.5},-3) -- ({\m-0.5},3);
+                            \node[anchor=north] at ({\m-0.5},-5) {\tiny \m};
+                            \ifnum\m=\peakmonth\relax
+                            \else
+                                \fill ({\m-0.5},0) circle (1.2pt);
+                            \fi
+                        }
+                    \draw[thick] ({\peakmonth-0.5},0) -- ({\peakmonth-0.5},{\peakvalue-100});
+                    \fill ({\peakmonth-0.5},{\peakvalue-100}) circle (2pt);
+                    \node[anchor=south] at ({\peakmonth-0.5},{\peakvalue-100}) {\small \peakvalue\,kW};
+                    \node[anchor=west] at (12.65,40) {\small 影響期間：\duration か月};
+                \end{scope}
+            }
+        \node[rotate=90] at (-1.4,190) {月内最大買電電力 [kW]};
+        \node at (6.2,-35) {2025年の月};
+    \end{tikzpicture}
+    \caption{代表3条件における2025年の月内最大買電電力}
+    \label{fig:representative_conditions}
 \end{figure}
 
-費用差の大部分は基本料金であり，16条件における基本料金の幅は1,243,928円であった．大きな過去月最大需要電力が契約電力算定に長く含まれる条件では，2026年の買電電力を抑制しても，当面の契約電力は低下しない．そのため，蓄電池スループットが最大6,479\,kWh減少し，充放電損失に伴う電力量料金が最大2,815円低下した．しかし，基本料金の増加が大きいため，年間総費用は増加した．
-
-\subsection{年間一定のデマンド目標値}
-
-目標値別の実行可能性を表\ref{tab:feasibility}に示す．16種類の過去月最大需要電力条件のうち，140～160\,kWは全条件で実行不能となった．一方，170および180\,kWは全条件で実行可能であり，目標値なし手法の最適解と費用・運用ともに同一であった．
+9ケースの年間基本料金，年間電力量料金および年間電気料金に加え，年間最大契約電力を表\ref{tab:cost_results}に示す．
 
 \begin{table}[H]
     \centering
-    \caption{デマンド目標値別の実行可能性}
-    \label{tab:feasibility}
-    \begin{tabular}{rrl}
+    \small
+    \caption{2025年の月内最大買電電力と影響期間による年間電気料金}
+    \label{tab:cost_results}
+    \begin{tabular}{rrrrrr}
         \toprule
-        目標値 [kW] & 実行可能数 & 目標値なし手法との関係         \\
+        \shortstack{2025年の月内                                                          \\最大買電電力}
+                             & 影響期間
+                             & \shortstack{年間最大                                       \\契約電力}
+                             & \shortstack{年間                                         \\基本料金}
+                             & \shortstack{年間                                         \\電力量料金}
+                             & \shortstack{年間                                         \\電気料金} \\
+        {[kW]}               & {[月]}            & {[kW]} & {[万円]} & {[万円]}  & {[万円]}  \\
         \midrule
-        140      & 0/16  & 全ての過去月最大需要電力条件で実行不能 \\
-        150      & 0/16  & 全ての過去月最大需要電力条件で実行不能 \\
-        160      & 0/16  & 全ての過去月最大需要電力条件で実行不能 \\
-        170      & 16/16 & 目標値なし手法の最適解と同一      \\
-        180      & 16/16 & 目標値なし手法の最適解と同一      \\
+        \multirow{3}{*}{140} & 1                & 166.8  & 396.8  & 1,136.5 & 1,533.3 \\
+                             & 6                & 166.8  & 439.6  & 1,136.5 & 1,576.1 \\
+                             & 11               & 166.8  & 439.6  & 1,136.5 & 1,576.1 \\
+        \midrule
+        \multirow{3}{*}{160} & 1                & 166.8  & 401.6  & 1,136.5 & 1,538.1 \\
+                             & 6                & 166.8  & 468.5  & 1,136.4 & 1,604.9 \\
+                             & 11               & 166.8  & 470.0  & 1,136.3 & 1,606.3 \\
+        \midrule
+        \multirow{3}{*}{180} & 1                & 180.0  & 406.4  & 1,136.5 & 1,542.9 \\
+                             & 6                & 180.0  & 497.3  & 1,136.4 & 1,633.8 \\
+                             & 11               & 180.0  & 516.3  & 1,136.2 & 1,652.6 \\
         \bottomrule
     \end{tabular}
 \end{table}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.80\linewidth]{feasibility_map.png}
-    \caption{2025年の月別最大需要電力条件とデマンド目標値に対する実行可能性}
-    \label{fig:feasibility}
-\end{figure}
+9ケースについて，2026年各月の月内最大買電電力，契約電力および月間電気料金を図\ref{fig:monthly_peak140_remain1}--\ref{fig:monthly_peak180_remain11}に示す．月間電気料金は，各月の基本料金と電力量料金の和である．
 
-実行可能性が2025年の月別最大需要電力条件によらないのは，その条件が契約電力と基本料金には影響する一方，2026年の需要電力，PV発電電力および蓄電池条件で決まる「物理的に達成可能な最低の買電電力上限」は変えないためである．本条件では，目標値なし手法の年間最大買電電力は166.826\,kWであった．そのため，160\,kWは厳しすぎ，170\,kWはすでに目標値なし手法の最適解が満たす緩い制約となった．
+\newcommand{\monthlycasefigure}[2]{%
+    \begin{figure}[H]
+        \centering
+        \begin{tikzpicture}
+            \begin{axis}[
+                width=0.90\textwidth,
+                height=6.2cm,
+                xmin=1, xmax=12,
+                ymin=80, ymax=190,
+                xtick={1,...,12},
+                ytick={80,100,120,140,160,180},
+                xlabel={2026年の月},
+                ylabel={電力 [kW]},
+                axis y line*=left,
+                axis x line*=bottom,
+                grid=major,
+                grid style={black!15},
+                tick label style={font=\small},
+                label style={font=\small},
+                legend style={
+                        at={(0.5,-0.25)},
+                        anchor=north,
+                        legend columns=3,
+                        draw=none,
+                        font=\small
+                    }
+                ]
+                \addplot[black,thick,mark=*]
+                table[
+                        x expr=\coordindex+1,
+                        y=contract_power_kW,
+                        col sep=comma
+                    ] {../results/demand_target_sensitivity/cases/peak#1_remain#2_targetnone/monthly.csv};
+                \addlegendentry{契約電力}
+                \addplot[black,thick,dashed,mark=square*]
+                table[
+                        x expr=\coordindex+1,
+                        y=monthly_peak_kW,
+                        col sep=comma
+                    ] {../results/demand_target_sensitivity/cases/peak#1_remain#2_targetnone/monthly.csv};
+                \addlegendentry{月内最大買電電力}
+                \addlegendimage{black,thick,densely dotted,mark=triangle*}
+                \addlegendentry{月間電気料金}
+            \end{axis}
+            \begin{axis}[
+                width=0.90\textwidth,
+                height=6.2cm,
+                xmin=1, xmax=12,
+                ymin=0, ymax=300,
+                xtick=\empty,
+                ytick={0,50,100,150,200,250,300},
+                ylabel={月間電気料金 [万円]},
+                axis y line*=right,
+                axis x line=none,
+                tick label style={font=\small},
+                label style={font=\small}
+                ]
+                \addplot[black,thick,densely dotted,mark=triangle*]
+                table[
+                        x expr=\coordindex+1,
+                        y expr=\thisrow{total_cost_yen}/10000,
+                        col sep=comma
+                    ] {../results/demand_target_sensitivity/cases/peak#1_remain#2_targetnone/monthly.csv};
+            \end{axis}
+        \end{tikzpicture}
+        \caption{2025年の月内最大買電電力#1\,kW・影響期間#2か月の条件における2026年の月別推移}
+        \label{fig:monthly_peak#1_remain#2}
+    \end{figure}
+}
 
-また，目標値なし手法は，契約電力を含む年間総費用をすでに最小化している．この最適化問題に買電電力上限制約を追加しても，同じ目的関数の最適値をさらに下げることはできない．したがって，今回の「費用差0円」は計算上の失敗ではなく，定式化から得られる性質である．
+\monthlycasefigure{140}{1}
+\monthlycasefigure{140}{6}
+\monthlycasefigure{140}{11}
+\monthlycasefigure{160}{1}
+\monthlycasefigure{160}{6}
+\monthlycasefigure{160}{11}
+\monthlycasefigure{180}{1}
+\monthlycasefigure{180}{6}
+\monthlycasefigure{180}{11}
 
-\subsection{代表条件の月別契約電力}
+2025年の月内最大買電電力が大きく，その値が契約電力算定に含まれる期間が長いほど，年間基本料金はおおむね増加した．
 
-2025年の月別最大需要電力を120および180\,kW，契約電力への影響期間を1および11か月とした4つの代表条件について，月別契約電力を図\ref{fig:representative_contract}に示す．過去月最大需要電力が大きく，影響期間が長いほど，2026年の月内最大買電電力を抑制しても契約電力が低下しない期間が長くなる．
+月内最大買電電力を140\,kWとした場合は，影響期間6か月と11か月の年間電気料金が同じであった．影響期間6か月の条件では，2026年7月以降に140\,kWを上回る月内最大買電電力が生じる．このため，140\,kWが契約電力算定にさらに5か月残っていても契約電力を決める値とはならず，年間電気料金に追加の影響を与えなかった．
 
-\begin{figure}[H]
-    \centering
-    \begin{tabular}{cc}
-        \includegraphics[width=0.47\linewidth]{representative_cases/peak120_remain1_target170kW_monthly_contract.png} &
-        \includegraphics[width=0.47\linewidth]{representative_cases/peak120_remain11_target170kW_monthly_contract.png}  \\
-        \includegraphics[width=0.47\linewidth]{representative_cases/peak180_remain1_target170kW_monthly_contract.png} &
-        \includegraphics[width=0.47\linewidth]{representative_cases/peak180_remain11_target170kW_monthly_contract.png}
-    \end{tabular}
-    \caption{2025年の月別最大需要電力と影響期間による月別契約電力の違い}
-    \label{fig:representative_contract}
-\end{figure}
+計算にはPySCIPOpt 5.5.0，SCIP 9.2.1を用いた．9ケースのソルバ計算時間の合計は617.6秒，1ケースの最大計算時間は74.3秒であった．
 
-\section{検証結果}
+\section{まとめ}
 
-実験結果の整合性を確認するため，次の検証を行った．
-
-\begin{itemize}
-    \item 全実行可能解において，最適化ギャップは0.00\% であった．
-    \item 初期SOCと終端SOCの差は0.0\,kWhであった．
-    \item 同一時刻の充電と放電の同時実行は0件であった．
-    \item 実行可能な目標値に対する最大超過量は0.0\,kWであった．
-    \item 表\ref{tab:remaining_months}で設定した過去月最大需要電力が，指定した月数だけ2026年の契約電力算定に含まれ，その翌月に参照範囲から外れることを小規模テストで確認した．
-\end{itemize}
-
-計算にはPySCIPOpt 5.5.0，SCIP 9.2.1を用いた．96ケースのソルバ計算時間の合計は1,139.7秒，1ケースの最大計算時間は74.3秒であった．目標値なし手法の最適解が指定したデマンド目標値をすでに満たす場合は，買電電力上限制約を追加した後も同一解が最適であることが数学的に保証されるため，対応する結果を再利用した．
-
-\section{結論と次の検討}
-
-本感度分析により，2025年の月別最大需要電力の大きさと，その値が契約電力算定に含まれる期間は，年間基本料金に大きな影響を与えることが確認できた．一方，今回用いた年間一定のデマンド目標値では，「厳しすぎて実行不能」または「緩すぎて目標値なし手法の最適解を変えない」のいずれかとなった．
-
-したがって，デマンド目標値の価値をさらに検討するためには，年間で一定の値を用いるのではなく，過去月最大需要電力が直近12か月の参照範囲から外れる月に合わせて変化する月別目標値 $T_m$ を定式化する必要がある．また，本条件の実行可能境界である166.83\,kW付近を0.1\,kW以下の刻みで詳細化し，需要・PV予測誤差を考慮した安全余裕の設計につなげる．
-
-\subsection*{フードテクノ社への確認事項}
-
-\begin{enumerate}
-    \item 現場実測の直近12か月の月別最大デマンドと発生時刻を評価に利用できるか．
-    \item 現場で設定しているデマンド目標値，警報値，および超過時の制御・例外ルール．
-    \item 需要・PV予測の更新間隔と，実運用時に利用可能な予測期間．
-    \item 正式約款上の検針日・請求締め日と，研究モデルの月次評価との対応．
-\end{enumerate}
+本検証により，2025年の月内最大買電電力は，その大きさだけでなく，契約電力算定に含まれる期間によって2026年の年間電気料金に与える影響が変化することを確認した．月内最大買電電力が140，160，180\,kW，影響期間が1，6，11か月の9ケースでは，年間電気料金に最大約119.3万円の差が生じ，その大部分は年間基本料金の差であった．
 
 \end{document}
