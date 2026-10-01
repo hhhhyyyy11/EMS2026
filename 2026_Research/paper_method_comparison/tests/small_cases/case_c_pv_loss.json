@@ -1,0 +1,42 @@
+{
+  "case_id": "C_pv_loss",
+  "description": "Excess PV is stored with 0.8/0.8 efficiencies and later supplies a 1 kW load.",
+  "problem": {
+    "time_step_hours": 1.0,
+    "load_kW": [0.0, 1.0],
+    "pv_available_kW": [2.0, 0.0],
+    "price_yen_per_kWh": [10.0, 10.0],
+    "battery_capacity_kWh": 2.0,
+    "charge_limit_kW_internal": 2.0,
+    "discharge_limit_kW_internal": 2.0,
+    "charge_efficiency": 0.8,
+    "discharge_efficiency": 0.8,
+    "soc_min_kWh": 0.0,
+    "soc_max_kWh": 2.0,
+    "initial_soc_kWh": 0.0,
+    "terminal_soc_kWh": 0.0,
+    "basic_charge_yen_per_kW": 2.0
+  },
+  "trajectory": {
+    "purchased_power_kW": [0.0, 0.0],
+    "pv_used_kW": [1.5625, 0.0],
+    "charge_power_kW_internal": [1.25, 0.0],
+    "discharge_power_kW_internal": [0.0, 1.25],
+    "soc_kWh": [0.0, 1.25, 0.0]
+  },
+  "reported": {
+    "maximum_purchased_power_kW": 0.0,
+    "contract_equivalent_power_kW": 0.0,
+    "energy_charge_yen": 0.0,
+    "basic_charge_yen": 0.0,
+    "objective_yen": 0.0
+  },
+  "hand_calculation": {
+    "pv_input_to_battery_kWh": 1.5625,
+    "stored_energy_kWh": 1.25,
+    "energy_delivered_to_load_kWh": 1.0,
+    "round_trip_loss_kWh": 0.5625,
+    "curtailed_pv_kWh": 0.4375,
+    "waiting_objective_yen": 12.0
+  }
+}

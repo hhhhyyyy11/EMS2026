@@ -1,0 +1,27 @@
+{
+  "experiment_id": "E1_initial_day",
+  "period_start": "2025-07-22T00:00:00+09:00",
+  "period_end_exclusive": "2025-07-23T00:00:00+09:00",
+  "interval_count": 48,
+  "time_step_hours": 0.5,
+  "fixed_price_yen_per_kWh": 21.51,
+  "methods": [
+    {"method": "lp", "soc_grid_count": null},
+    {"method": "milp", "soc_grid_count": null},
+    {"method": "dp", "soc_grid_count": 19},
+    {"method": "dp", "soc_grid_count": 37},
+    {"method": "dp", "soc_grid_count": 73},
+    {"method": "dp", "soc_grid_count": 145}
+  ],
+  "initial_runs_per_case": 1,
+  "prepared_runs_per_case": 3,
+  "time_limit_seconds_per_run": 300,
+  "solver_threads": 1,
+  "relative_mip_gap": 0.0,
+  "notes": [
+    "A prepared run follows one initial run of the same method and grid in this runner process.",
+    "Every returned solution is independently evaluated before it is marked successful.",
+    "LP is diagnostic and may allow simultaneous charge and discharge.",
+    "The successful-run minimum is a descriptive comparison reference, not necessarily a certified global optimum when MILP is unproven."
+  ]
+}

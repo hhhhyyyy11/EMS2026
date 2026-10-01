@@ -1,0 +1,34 @@
+{
+  "case_id": "A_waiting",
+  "description": "No PV, unit efficiencies, constant price and load; the battery waits.",
+  "problem": {
+    "time_step_hours": 0.5,
+    "load_kW": [2.0, 2.0, 2.0],
+    "pv_available_kW": [0.0, 0.0, 0.0],
+    "price_yen_per_kWh": [10.0, 10.0, 10.0],
+    "battery_capacity_kWh": 2.0,
+    "charge_limit_kW_internal": 1.0,
+    "discharge_limit_kW_internal": 1.0,
+    "charge_efficiency": 1.0,
+    "discharge_efficiency": 1.0,
+    "soc_min_kWh": 0.0,
+    "soc_max_kWh": 2.0,
+    "initial_soc_kWh": 1.0,
+    "terminal_soc_kWh": 1.0,
+    "basic_charge_yen_per_kW": 4.0
+  },
+  "trajectory": {
+    "purchased_power_kW": [2.0, 2.0, 2.0],
+    "pv_used_kW": [0.0, 0.0, 0.0],
+    "charge_power_kW_internal": [0.0, 0.0, 0.0],
+    "discharge_power_kW_internal": [0.0, 0.0, 0.0],
+    "soc_kWh": [1.0, 1.0, 1.0, 1.0]
+  },
+  "reported": {
+    "maximum_purchased_power_kW": 2.0,
+    "contract_equivalent_power_kW": 2.0,
+    "energy_charge_yen": 30.0,
+    "basic_charge_yen": 8.0,
+    "objective_yen": 38.0
+  }
+}

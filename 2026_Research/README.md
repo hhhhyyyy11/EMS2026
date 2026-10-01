@@ -2,6 +2,11 @@
 
 このフォルダを2026年度の研究作業の起点とする。
 
+## 研究計画
+
+- [論文用：数理計画法・DP比較研究](paper_method_comparison/README.md)
+- [別セッションでの作業再開ガイド](paper_method_comparison/START_HERE.md)
+
 ## 研究テーマ
 
 1. デマンド目標値・契約電力履歴を考慮したEMSのLP計画
@@ -17,6 +22,7 @@
 - `MeetingHistory/`: トランスクリプト・議事録
 - `references/`: 研究テーマ資料・過年度成果への参照
 - `planning/`: 研究計画、整理記録、報告構成案
+- `paper_method_comparison/`: 数理計画法・DP比較論文の専用作業領域
 
 ## 実行上の注意
 

@@ -1,0 +1,121 @@
+{
+  "case_id": "D_invalid_examples",
+  "base_case": "case_b_arbitrage.json",
+  "description": "Each mutation independently breaks one correct value and must be detected.",
+  "mutations": [
+    {
+      "name": "purchased_power_nonnegative",
+      "path": ["trajectory", "purchased_power_kW", 1],
+      "value": -0.25,
+      "expected_check": "purchased_power_nonnegative"
+    },
+    {
+      "name": "pv_used_nonnegative",
+      "path": ["trajectory", "pv_used_kW", 0],
+      "value": -0.25,
+      "expected_check": "pv_used_nonnegative"
+    },
+    {
+      "name": "pv_availability",
+      "path": ["trajectory", "pv_used_kW", 0],
+      "value": 0.25,
+      "expected_check": "pv_availability"
+    },
+    {
+      "name": "charge_power_nonnegative",
+      "path": ["trajectory", "charge_power_kW_internal", 0],
+      "value": -0.25,
+      "expected_check": "charge_power_nonnegative"
+    },
+    {
+      "name": "discharge_power_nonnegative",
+      "path": ["trajectory", "discharge_power_kW_internal", 1],
+      "value": -0.25,
+      "expected_check": "discharge_power_nonnegative"
+    },
+    {
+      "name": "charge_power_limit",
+      "path": ["trajectory", "charge_power_kW_internal", 0],
+      "value": 1.25,
+      "expected_check": "charge_power_limit"
+    },
+    {
+      "name": "discharge_power_limit",
+      "path": ["trajectory", "discharge_power_kW_internal", 1],
+      "value": 1.25,
+      "expected_check": "discharge_power_limit"
+    },
+    {
+      "name": "soc_transition",
+      "path": ["trajectory", "soc_kWh", 1],
+      "value": 1.5,
+      "expected_check": "soc_transition"
+    },
+    {
+      "name": "power_balance",
+      "path": ["trajectory", "purchased_power_kW", 0],
+      "value": 1.5,
+      "expected_check": "power_balance"
+    },
+    {
+      "name": "terminal_soc",
+      "path": ["trajectory", "soc_kWh", 2],
+      "value": 0.5,
+      "expected_check": "terminal_soc"
+    },
+    {
+      "name": "initial_soc",
+      "path": ["trajectory", "soc_kWh", 0],
+      "value": 0.5,
+      "expected_check": "initial_soc"
+    },
+    {
+      "name": "soc_lower_bound",
+      "path": ["trajectory", "soc_kWh", 1],
+      "value": -0.5,
+      "expected_check": "soc_lower_bound"
+    },
+    {
+      "name": "soc_upper_bound",
+      "path": ["trajectory", "soc_kWh", 1],
+      "value": 2.5,
+      "expected_check": "soc_upper_bound"
+    },
+    {
+      "name": "maximum_purchased_power",
+      "path": ["reported", "maximum_purchased_power_kW"],
+      "value": 1.0,
+      "expected_check": "reported_maximum_purchased_power_kW"
+    },
+    {
+      "name": "contract_equivalent_power",
+      "path": ["reported", "contract_equivalent_power_kW"],
+      "value": 1.0,
+      "expected_check": "reported_contract_equivalent_power_kW"
+    },
+    {
+      "name": "energy_charge",
+      "path": ["reported", "energy_charge_yen"],
+      "value": 19.0,
+      "expected_check": "reported_energy_charge_yen"
+    },
+    {
+      "name": "basic_charge",
+      "path": ["reported", "basic_charge_yen"],
+      "value": 9.0,
+      "expected_check": "reported_basic_charge_yen"
+    },
+    {
+      "name": "total_cost",
+      "path": ["reported", "objective_yen"],
+      "value": 29.0,
+      "expected_check": "reported_objective_yen"
+    },
+    {
+      "name": "simultaneous_charge_discharge",
+      "path": ["trajectory", "discharge_power_kW_internal", 0],
+      "value": 0.25,
+      "expected_check": "simultaneous_charge_discharge"
+    }
+  ]
+}
