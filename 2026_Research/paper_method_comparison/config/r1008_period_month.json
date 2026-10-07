@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "study_id": "paper_method_comparison",
+  "timezone": "Asia/Tokyo",
+  "input": {
+    "energy_excel_path": "../../Data/common_energy_data.xlsx",
+    "energy_sheet": "30分値",
+    "timestamp_columns": {
+      "date": "日付",
+      "time": "時刻"
+    },
+    "value_columns": {
+      "load_energy": "消費電力量",
+      "pv_energy": "発電量"
+    },
+    "source_energy_unit": "kWh_per_interval",
+    "source_interval_hours": 0.5,
+    "timestamp_snap_tolerance_milliseconds": 5,
+    "available_start": "2025-01-01T00:00:00+09:00",
+    "available_end_exclusive": "2026-01-01T00:00:00+09:00",
+    "expected_available_intervals": 17520
+  },
+  "period": {
+    "start": "2025-07-22T00:00:00+09:00",
+    "end_exclusive": "2025-08-21T00:00:00+09:00",
+    "time_step_hours": 0.5
+  },
+  "price": {
+    "mode": "fixed",
+    "fixed_yen_per_kWh": 21.51
+  },
+  "battery": {
+    "capacity_kWh": 860.0,
+    "charge_limit_kW_internal": 400.0,
+    "discharge_limit_kW_internal": 400.0,
+    "charge_efficiency": 0.98,
+    "discharge_efficiency": 0.98,
+    "soc_min_ratio": 0.05,
+    "soc_max_ratio": 0.95,
+    "initial_soc_ratio": 0.5,
+    "terminal_soc_ratio": 0.5
+  },
+  "basic_charge": {
+    "monthly_yen_per_kW": 2829.6,
+    "power_factor_multiplier": 0.85,
+    "months_per_year": 12,
+    "proration": "study_hours_over_8760",
+    "hours_per_year": 8760
+  },
+  "dp": {
+    "soc_grid_counts": [
+      19,
+      37,
+      73,
+      145
+    ],
+    "require_nested_grids": true,
+    "require_exact_initial_and_terminal_soc": true
+  },
+  "solver": {
+    "math_program": {
+      "name": "SCIP",
+      "threads": 1,
+      "relative_mip_gap": 0.0
+    },
+    "time_limit_seconds_per_case": 600,
+    "memory_budget_gib_per_run": 2
+  },
+  "results": {
+    "root_path": "../results",
+    "directory_pattern": "<experiment_id>_<YYYYMMDDTHHMMSS+0900>_<identifier>",
+    "required_files": [
+      "config.json",
+      "environment.json",
+      "summary.json",
+      "trajectory.csv",
+      "run.log"
+    ],
+    "overwrite_existing_directory": false
+  }
+}

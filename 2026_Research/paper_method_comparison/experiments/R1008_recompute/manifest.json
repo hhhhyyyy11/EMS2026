@@ -1,0 +1,88 @@
+{
+  "campaign": "R1008_recompute",
+  "planned_runs": 192,
+  "replicates_per_method": 4,
+  "time_limit_seconds": 600,
+  "code_sha256": {
+    "src/recompute_report_1008.py": "722bd0787d2a3698808336f69ab2652f3a596b700fe7a690726393c6cc81a5f4",
+    "src/run_experiments.py": "2b9ea5c13d280ffdb1a928b67f3cc54195e336f0765c59f64f5931588ceca585",
+    "src/check_run_setup.py": "328656d04e136b2905941fe6dda2e9f55dd19f6ce70317086332b340c984b907",
+    "src/solve_math_program.py": "161dee8d000e64f50259022cab9c58d748a9a9d1bdfacb621a57427b55f5fd16",
+    "src/solve_dp.py": "7deadaef58e36c98236c26795e46a57dc89a1c1a7384312ed0cffb763c291af8",
+    "src/evaluate_solution.py": "b8825dfa9cb4a56e7c298f6494680e4bbc73745f5187e4ca0bf12d28b0ebb1d5"
+  },
+  "cases": {
+    "period_day": {
+      "config_path": "config/r1008_period_day.json",
+      "config_sha256": "8f01eb4df7719c040dbe2e651eb4bd6296580688fa69d5e37ae61351039465b6",
+      "source_sha256": "155ad719f9309c566113d5635ca4cf1bd45596b5b09b87f5468fca6a9e04539e",
+      "converted_input_sha256": "c4e457b72f138da3258166e69748525e37dc6536cda2d34a8a06ec1f303e70ca",
+      "time_step_hours": 0.5,
+      "intervals": 48,
+      "first_load_kW": 98.0
+    },
+    "period_week": {
+      "config_path": "config/r1008_period_week.json",
+      "config_sha256": "d2987bfad08774a44824d8897cb0269917edcb8bb8f2b880e8ed5bb4db010b8b",
+      "source_sha256": "155ad719f9309c566113d5635ca4cf1bd45596b5b09b87f5468fca6a9e04539e",
+      "converted_input_sha256": "30057fed771933f5b04a6e9493d22584d098ecc329196c57303b8af45e33371e",
+      "time_step_hours": 0.5,
+      "intervals": 336,
+      "first_load_kW": 98.0
+    },
+    "period_month": {
+      "config_path": "config/r1008_period_month.json",
+      "config_sha256": "893bbc114030e53f492666988e86032ce4b563ac84d38e3fb33c349223316136",
+      "source_sha256": "155ad719f9309c566113d5635ca4cf1bd45596b5b09b87f5468fca6a9e04539e",
+      "converted_input_sha256": "24d131d29a6b96f6717699f442e0ae0954a238db5a4bd9345b81b1e2aa009a65",
+      "time_step_hours": 0.5,
+      "intervals": 1440,
+      "first_load_kW": 98.0
+    },
+    "period_hour": {
+      "config_path": "config/r1008_period_hour.json",
+      "config_sha256": "4381ee01439bc1a0d828cfb0b27e2b409dfd00c6174a443d0590f7564e78e45f",
+      "source_sha256": "155ad719f9309c566113d5635ca4cf1bd45596b5b09b87f5468fca6a9e04539e",
+      "converted_input_sha256": "e54bd5c09daba3d15566a520af981e56bde63e9c756eaa0c50842a254bf21467",
+      "time_step_hours": 1.0,
+      "intervals": 168,
+      "first_load_kW": 103.0
+    },
+    "season_winter": {
+      "config_path": "config/r1008_season_winter.json",
+      "config_sha256": "0a63baedcf68b0b2e93c951751ccfdbb53e2c96bce0a0943cb7de4d41dfa113e",
+      "source_sha256": "155ad719f9309c566113d5635ca4cf1bd45596b5b09b87f5468fca6a9e04539e",
+      "converted_input_sha256": "c0c668d9a2935d926ae67b981401e462d26f6bb60b81d8ef48d8b2b9d0fafd49",
+      "time_step_hours": 0.5,
+      "intervals": 336,
+      "first_load_kW": 50.0
+    },
+    "season_spring": {
+      "config_path": "config/r1008_season_spring.json",
+      "config_sha256": "754e52aa1584507d462dccc58de9d36275308b9d7bf0c5e3500ab1e326c08992",
+      "source_sha256": "155ad719f9309c566113d5635ca4cf1bd45596b5b09b87f5468fca6a9e04539e",
+      "converted_input_sha256": "b0e44241883052f823271b74322ffbc1b96c213814465e1701f198b0285da284",
+      "time_step_hours": 0.5,
+      "intervals": 336,
+      "first_load_kW": 42.0
+    },
+    "season_summer": {
+      "config_path": "config/r1008_season_summer.json",
+      "config_sha256": "d2987bfad08774a44824d8897cb0269917edcb8bb8f2b880e8ed5bb4db010b8b",
+      "source_sha256": "155ad719f9309c566113d5635ca4cf1bd45596b5b09b87f5468fca6a9e04539e",
+      "converted_input_sha256": "30057fed771933f5b04a6e9493d22584d098ecc329196c57303b8af45e33371e",
+      "time_step_hours": 0.5,
+      "intervals": 336,
+      "first_load_kW": 98.0
+    },
+    "season_autumn": {
+      "config_path": "config/r1008_season_autumn.json",
+      "config_sha256": "a28856228c1ff1b6029436f4a4fc36f0d389001389f5e66a8b182e6d164e08fd",
+      "source_sha256": "155ad719f9309c566113d5635ca4cf1bd45596b5b09b87f5468fca6a9e04539e",
+      "converted_input_sha256": "3cc85b3765afd9ab01d6c90535225ddc99da2b0eeda74fd9f2a78271ee01be57",
+      "time_step_hours": 0.5,
+      "intervals": 336,
+      "first_load_kW": 76.0
+    }
+  }
+}
