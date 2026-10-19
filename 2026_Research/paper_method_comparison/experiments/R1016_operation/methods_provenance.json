@@ -1,0 +1,73 @@
+[
+  {
+    "scenario": "period_day",
+    "method": "LP",
+    "run_id": "R1008-period_day-lp-r0",
+    "result_directory": "/Users/yzhy/Documents/大学関係/2026前期/EMS/2026_Research/paper_method_comparison/results/R1008_20261007T232304+0900_period_day_lp-r0",
+    "trajectory_sha256": "1e63d6117c12c0128617aeb47cece49ed315127b3956457a27471f92b2bb16fa",
+    "evaluation": "pass"
+  },
+  {
+    "scenario": "period_day",
+    "method": "DP37",
+    "run_id": "R1008-period_day-dp-37-r0",
+    "result_directory": "/Users/yzhy/Documents/大学関係/2026前期/EMS/2026_Research/paper_method_comparison/results/R1008_20261007T232423+0900_period_day_dp-37-r0",
+    "trajectory_sha256": "3e0bfdbdd5b9a11487c8de9a12ca148bd89da802874a2e9e57b8279b24391a6b",
+    "evaluation": "pass"
+  },
+  {
+    "scenario": "period_day",
+    "method": "DP73",
+    "run_id": "R1008-period_day-dp-73-r0",
+    "result_directory": "/Users/yzhy/Documents/大学関係/2026前期/EMS/2026_Research/paper_method_comparison/results/R1008_20261007T233245+0900_period_day_dp-73-r0",
+    "trajectory_sha256": "80867a100260e8c69ba121322f4fb0e362bc95ee9643a0bc15ec628da97b9b74",
+    "evaluation": "pass"
+  },
+  {
+    "scenario": "period_week",
+    "method": "LP",
+    "run_id": "R1008-period_week-lp-r0",
+    "result_directory": "/Users/yzhy/Documents/大学関係/2026前期/EMS/2026_Research/paper_method_comparison/results/R1008_20261007T232304+0900_period_week_lp-r0",
+    "trajectory_sha256": "f42b90cd82717d66de13d997a118dc0c3859114c9bf131459f47b2218c371c4b",
+    "evaluation": "pass"
+  },
+  {
+    "scenario": "period_week",
+    "method": "DP37",
+    "run_id": "R1008-period_week-dp-37-r0",
+    "result_directory": "/Users/yzhy/Documents/大学関係/2026前期/EMS/2026_Research/paper_method_comparison/results/R1008_20261007T232425+0900_period_week_dp-37-r0",
+    "trajectory_sha256": "7769520437989297e388d11425dd3a217c8fe58285b502ef2168d7fc40d94528",
+    "evaluation": "pass"
+  },
+  {
+    "scenario": "period_week",
+    "method": "DP73",
+    "run_id": "R1008-period_week-dp-73-r0",
+    "result_directory": "/Users/yzhy/Documents/大学関係/2026前期/EMS/2026_Research/paper_method_comparison/results/R1008_20261007T233301+0900_period_week_dp-73-r0",
+    "trajectory_sha256": "8f706d0fdcadb58d3401df06d69849c6d70313cbff3d0f2d2d84efaa34e6af6c",
+    "evaluation": "pass"
+  },
+  {
+    "scenario": "period_month",
+    "method": "LP",
+    "run_id": "R1008-period_month-lp-r0",
+    "result_directory": "/Users/yzhy/Documents/大学関係/2026前期/EMS/2026_Research/paper_method_comparison/results/R1008_20261007T232304+0900_period_month_lp-r0",
+    "trajectory_sha256": "ba020af81b034dc974b1586f951c0834c865dfe107fadb788c02b7678310eebd",
+    "evaluation": "pass"
+  },
+  {
+    "scenario": "period_month",
+    "method": "DP37",
+    "run_id": "R1008-period_month-dp-37-r0",
+    "result_directory": "/Users/yzhy/Documents/大学関係/2026前期/EMS/2026_Research/paper_method_comparison/results/R1008_20261007T232514+0900_period_month_dp-37-r0",
+    "trajectory_sha256": "52686ee3ca8009b2addee8881c7ccc6c079c5df00d6c17ce3bc56623810fdcd8",
+    "evaluation": "pass"
+  },
+  {
+    "scenario": "period_month",
+    "method": "DP73",
+    "status": "time_limit",
+    "successful_runs": 0,
+    "attempted_runs": 4
+  }
+]

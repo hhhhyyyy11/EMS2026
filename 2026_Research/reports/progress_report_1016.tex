@@ -1,0 +1,324 @@
+\ifdefined\XeTeXversion
+  \documentclass[a4paper,11pt,xelatex,ja=standard]{bxjsarticle}
+\else
+  \documentclass[a4paper,11pt,platex,dvipdfmx,ja=standard]{bxjsarticle}
+\fi
+
+\geometry{top=20mm,bottom=25mm,left=20mm,right=20mm}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{graphicx}
+\ifdefined\XeTeXversion
+  \setCJKmainfont{HaranoAjiMincho-Regular.otf}
+  \setCJKsansfont{HaranoAjiGothic-Medium.otf}
+\fi
+
+
+\title{今週の進捗報告\\[0.5em]\large EMS最適化手法の比較研究\\比較実験結果と最適化期間による運用の違い}
+\author{神戸大学大学院システム情報学研究科 修士1年\\山崎博之}
+\date{2026年10月16日}
+
+\begin{document}
+\maketitle
+
+\section{背景と目的}
+本研究では，太陽光発電（PV）と蓄電池を備えたエネルギーマネジメントシステム（EMS）について，電力料金を最小化する充放電計画を対象とする．論文作成に向け，線形計画法（LP）と動的計画法（DP）を同一条件で比較し，解の費用差と計算時間を評価する準備を進めた．本報告では，前回までの比較実験結果を再掲し，最適化期間による1日の蓄電池運用の違いを示す．
+
+\section{論文作成に向けた準備}
+まず，需要・PV・蓄電池1台・系統買電からなる共通モデルを定めた．対象期間内の最大買電電力に基づく基本料金相当額と，買電量に基づく電力量料金の合計を最小化する．2025年の実データを使用し，電力量単価21.51\,円/kWh，蓄電池容量860\,kWh，最大充放電出力400\,kW，初期・終端SOC50\%などの条件を揃えた．基本料金は対象期間の長さに応じて按分した．
+
+次に，LP，充放電の排他制約を明示した混合整数線形計画法（MILP），およびSOCを離散化したDPを実装した．
+
+その上で，計画期間，時間刻み，季節を変えた実験を行った．各実験ケースと手法の組み合わせ（DPではSOC格子点数ごと）を4回ずつ実行し，費用と計算時間は成功試行の平均値で比較した．1回当たりの時間上限は600秒である．前回報告した192件は168件成功，24件時間切れ，失敗0件だった．
+
+\section{計算条件}
+入力には北海道十勝地方の施設における2025年の需要電力量とPV発電量の実測値を用いた．元データは30分ごとの電力量［kWh］であり，各区間の電力［kW］へ換算して使用した．1日，7日，30日の比較期間は表\ref{tab:conditions}の通りである．60分ケースでは隣接する30分値2点の平均電力を用い，電力量を保存した．異なる入力条件の4例として，冬（1月14～20日），春（4月15～21日），夏（7月22～28日），秋（10月14～20日）の各1週間を用いた．
+
+\begin{table}[htbp]
+    \centering
+    \caption{期間・時間刻みの比較条件}
+    \label{tab:conditions}
+    \begin{tabular}{lccc}
+        \toprule
+        条件      & 対象期間（2025年） & 時間刻み & 区間数   \\
+        \midrule
+        1日・30分  & 7月22日       & 30分  & 48    \\
+        7日・30分  & 7月22～28日    & 30分  & 336   \\
+        30日・30分 & 7月22日～8月20日 & 30分  & 1,440 \\
+        7日・60分  & 7月22～28日    & 60分  & 168   \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+    \centering
+    \caption{電気料金と蓄電池の計算条件}
+    \label{tab:system-conditions}
+    \begin{tabular}{p{46mm}p{91mm}}
+        \toprule
+        項目        & 設定             \\
+        \midrule
+        買電単価      & 21.51\,円/kWh   \\
+        月額基本料金単価  & 2,829.60\,円/kW \\
+        力率補正係数    & 0.85           \\
+        蓄電池定格容量   & 860\,kWh       \\
+        最大充電・放電電力 & 400\,kW        \\
+        充電・放電効率   & 0.98           \\
+        運用SOC範囲   & 定格容量の5～95\%    \\
+        初期・終端SOC  & 定格容量の50\%      \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+比較する手法は連続SOCのLP，同時充放電の排他制約を明示した連続SOCのMILP，およびSOCを19，37，73，145点に離散化したDPである．4回とも事前準備後に実行した．各実行の上限を600秒とした．
+
+\section{数理モデルの定式化}
+\subsection{目的関数}
+時刻区間を$k=0,1,\ldots,K-1$，1区間の幅を$\Delta t$［h］とする．$d_k$は需要電力，$g^{\mathrm{P1}}_k$は利用可能なPV電力，$p^{\mathrm{BY}}_k$は買電単価であり，いずれも既知とする．決定変数$s^{\mathrm{BY}}_k$は買電電力，$s^{\mathrm{BY}}_{\mathrm{MAX}}$は対象期間内の最大買電電力を表す．目的関数は，基本料金相当額と電力量料金の合計を最小化する．
+\begin{equation}
+    \text{Minimize}\quad C_{\mathrm{total}}
+    = w_{\mathrm{basic}}s^{\mathrm{BY}}_{\mathrm{MAX}}
+    + \sum_{k=0}^{K-1}p^{\mathrm{BY}}_k s^{\mathrm{BY}}_k\Delta t
+    \label{eq:objective}
+\end{equation}
+買電単価は全時刻で$p^{\mathrm{BY}}_k=21.51$［円/kWh］とした．基本料金係数$w_{\mathrm{basic}}$［円/kW］には，年間単価を対象期間の時間数$K\Delta t$に比例させた次式を用いる．
+\begin{equation}
+    w_{\mathrm{basic}}
+    = (2{,}829.60\times0.85\times12)
+    \frac{K\Delta t}{8{,}760}
+    \label{eq:basic-weight}
+\end{equation}
+ここで，8,760は2025年の1年間の時間数（365日$\times$24時間）である．
+この基本料金は，実際の過去12か月を参照する月別契約電力ではなく，比較対象期間の最大買電電力を使った代理的な評価である．
+
+\subsection{制約条件}
+以下の式は，各区間$k=0,\ldots,K-1$に適用する．$g^{\mathrm{P2}}_k$を利用するPV電力，$x^{\mathrm{FC1}}_k$と$x^{\mathrm{FC2}}_k$を電池の外部側・内部側の充電電力，$x^{\mathrm{FD1}}_k$と$x^{\mathrm{FD2}}_k$を内部側・外部側の放電電力，$b^{\mathrm{F}}_k$を区間境界$k$の蓄電量［kWh］とする．
+
+\begin{enumerate}
+    \item \textbf{電力需給バランスと変換効率}：
+          \begin{equation}
+              g^{\mathrm{P2}}_k+s^{\mathrm{BY}}_k+x^{\mathrm{FD2}}_k
+              =d_k+x^{\mathrm{FC1}}_k \label{eq:balance}
+          \end{equation}
+          \begin{equation}
+              x^{\mathrm{FC2}}_k=\alpha_{\mathrm c}x^{\mathrm{FC1}}_k
+              \label{eq:charge-efficiency}
+          \end{equation}
+          \begin{equation}
+              x^{\mathrm{FD2}}_k=\alpha_{\mathrm d}x^{\mathrm{FD1}}_k
+              \label{eq:discharge-efficiency}
+          \end{equation}
+          充電・放電の変換効率はそれぞれ$\alpha_{\mathrm c}=\alpha_{\mathrm d}=0.98$とする．
+
+    \item \textbf{PV利用量と買電電力}：売電は行わない．
+          \begin{equation}
+              0\leq g^{\mathrm{P2}}_k\leq g^{\mathrm{P1}}_k,\qquad
+              s^{\mathrm{BY}}_k\geq0 \label{eq:pv-buy}
+          \end{equation}
+
+    \item \textbf{蓄電量の遷移，範囲，境界条件}：定格容量を$C$とする．
+          \begin{align}
+              b^{\mathrm{F}}_{k+1}
+                               & =b^{\mathrm{F}}_k+
+              (x^{\mathrm{FC2}}_k-x^{\mathrm{FD1}}_k)\Delta t
+              \label{eq:soc-update}                    \\
+              0.05C            & \leq b^{\mathrm{F}}_j
+              \leq0.95C
+              \quad(j=0,\ldots,K) \label{eq:soc-range} \\
+              b^{\mathrm{F}}_0 & =b^{\mathrm{F}}_K
+              =0.50C=430\ \mathrm{kWh} \label{eq:soc-boundary}
+          \end{align}
+          蓄電量は区間の両端に定義するため，$K$区間に対して$K+1$点である．
+
+    \item \textbf{充放電出力と排他制約}：MILPでは二値変数$z_k\in\{0,1\}$を用い，同時充放電を明示的に禁止する．
+          \begin{equation}
+              0\leq x^{\mathrm{FC2}}_k\leq P^{\mathrm{FC}}_{\mathrm{max}}z_k,
+              \qquad
+              0\leq x^{\mathrm{FD1}}_k\leq P^{\mathrm{FD}}_{\mathrm{max}}(1-z_k)
+              \label{eq:exclusive}
+          \end{equation}
+          LPでは$z_k$と排他制約を除き，$0\leq x^{\mathrm{FC2}}_k\leq P^{\mathrm{FC}}_{\mathrm{max}}$，$0\leq x^{\mathrm{FD1}}_k\leq P^{\mathrm{FD}}_{\mathrm{max}}$を課す．DPでは蓄電量の増減方向から充電と放電のいずれか一方を選ぶ．
+
+    \item \textbf{最大買電電力}：
+          \begin{equation}
+              0\leq s^{\mathrm{BY}}_k\leq s^{\mathrm{BY}}_{\mathrm{MAX}},
+              \qquad s^{\mathrm{BY}}_{\mathrm{MAX}}\geq0
+              \label{eq:max-buy}
+          \end{equation}
+          最適解では期間内の買電電力の最大値と一致する．
+\end{enumerate}
+
+DPのSOC格子は5～95\%の範囲に19，37，73，145点を等間隔に配置し，初期・終端の50\%を厳密に含める．各SOCについて累積電力量料金とその時点までの最大買電電力の非劣ラベルを保持し，終端で式(\ref{eq:objective})を評価する．このため，DPもLP・MILPと同じ基本料金と電力量料金を対象とする．
+
+\section{比較実験の結果}
+表\ref{tab:period}と表\ref{tab:season}にLP・MILP・DPそれぞれの費用と処理時間を示す．費用と処理時間の平均値は，いずれも成功した試行から求めた．
+表\ref{tab:period}の対象期間は2025年であり，1日・30分は7月22日，7日・30分と7日・60分は7月22～28日，30日・30分は7月22日～8月20日である．
+
+\begingroup
+\small
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{llrrr}
+    \caption{期間・時間刻み別の費用と処理時間（各手法4回）}\label{tab:period} \\
+    \toprule
+    条件      & 手法     & 成功/4 & 費用平均値 [円] & 時間平均値 [秒]     \\
+    \midrule
+    \endfirsthead
+    \toprule
+    条件      & 手法     & 成功/4 & 費用平均値 [円] & 時間平均値 [秒]     \\
+    \midrule
+    \endhead
+    1日・30分  & LP     & 4    & 57,869    & 0.02          \\
+            & MILP   & 4    & 57,869    & 0.02          \\
+            & DP-19  & 4    & 60,972    & 0.06          \\
+            & DP-37  & 4    & 59,650    & 0.51          \\
+            & DP-73  & 4    & 58,776    & 3.96          \\
+            & DP-145 & 4    & 58,307    & 31.08         \\
+    \midrule
+    7日・30分  & LP     & 4    & 545,929   & 0.07          \\
+            & MILP   & 4    & 545,929   & 0.47          \\
+            & DP-19  & 4    & 565,887   & 1.40          \\
+            & DP-37  & 4    & 557,292   & 12.19         \\
+            & DP-73  & 4    & 551,850   & 107.04        \\
+            & DP-145 & 0    & --        & --            \\
+    \midrule
+    30日・30分 & LP     & 4    & 2,441,484 & 0.46          \\
+            & MILP   & 4    & 2,441,484 & 2.01          \\
+            & DP-19  & 4    & 2,542,031 & 7.85          \\
+            & DP-37  & 4    & 2,495,660 & 75.50         \\
+            & DP-73  & 0    & --        & --            \\
+            & DP-145 & 0    & --        & --            \\
+    \midrule
+    7日・60分  & LP     & 4    & 545,625   & 0.03          \\
+            & MILP   & 4    & 545,625   & 0.23          \\
+            & DP-19  & 4    & 558,579   & 1.68          \\
+            & DP-37  & 4    & 550,115   & 14.99         \\
+            & DP-73  & 4    & 547,828   & 122.42        \\
+            & DP-145 & 0    & --        & --            \\
+    \bottomrule
+\end{longtable}
+\endgroup
+
+\clearpage
+\begingroup
+\small
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{llrrr}
+    \caption{異なる入力条件4例の費用と処理時間（各1週間，30分刻み，各手法4回）}\label{tab:season} \\
+    \toprule
+    季節 & 手法     & 成功/4 & 費用平均値 [円] & 時間平均値 [秒]                      \\
+    \midrule
+    \endfirsthead
+    \toprule
+    季節 & 手法     & 成功/4 & 費用平均値 [円] & 時間平均値 [秒]                      \\
+    \midrule
+    \endhead
+    冬  & LP     & 4    & 83,719    & 0.07                           \\
+       & MILP   & 4    & 83,719    & 0.28                           \\
+       & DP-19  & 4    & 153,161   & 0.16                           \\
+       & DP-37  & 4    & 96,245    & 0.79                           \\
+       & DP-73  & 4    & 89,601    & 10.03                          \\
+       & DP-145 & 4    & 86,811    & 123.93                         \\
+    \midrule
+    春  & LP     & 4    & 191,774   & 0.07                           \\
+       & MILP   & 4    & 191,774   & 0.17                           \\
+       & DP-19  & 4    & 214,988   & 0.19                           \\
+       & DP-37  & 4    & 204,237   & 2.44                           \\
+       & DP-73  & 4    & 197,878   & 19.95                          \\
+       & DP-145 & 4    & 194,230   & 213.77                         \\
+    \midrule
+    夏  & LP     & 4    & 545,929   & 0.07                           \\
+       & MILP   & 4    & 545,929   & 0.48                           \\
+       & DP-19  & 4    & 565,887   & 1.39                           \\
+       & DP-37  & 4    & 557,292   & 12.00                          \\
+       & DP-73  & 4    & 551,850   & 97.69                          \\
+       & DP-145 & 0    & --        & --                             \\
+    \midrule
+    秋  & LP     & 4    & 283,335   & 0.09                           \\
+       & MILP   & 4    & 283,335   & 0.42                           \\
+       & DP-19  & 4    & 308,012   & 0.53                           \\
+       & DP-37  & 4    & 293,684   & 6.74                           \\
+       & DP-73  & 4    & 289,347   & 58.21                          \\
+       & DP-145 & 0    & --        & --                             \\
+    \bottomrule
+\end{longtable}
+\endgroup
+
+\section{結果の解釈}
+LPの結果は，MILPの結果と一致し，観測された同時充放電は0\,kWだった．これは本研究の設定に限る結果である．
+
+
+\clearpage
+\section{最適化期間による1日の運用の違い}
+LP・DP37点・DP73点の1日・7日・30日計画から，共通する2025年7月22日の運用を取り出した．各条件の1回目の保存済み結果を用いた．30日計画のDP73点は4回とも時間切れであり，運用図には表示していない．
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.90\textwidth]{../paper_method_comparison/figures/R1016_daily_operation.png}
+    \caption{最適化期間別の7月22日の運用（30分刻み）．上段は需要・利用可能PV・各手法の買電，中段は外部側の充放電（充電を正，放電を負），下段はSOCを示す．電力は各区間の平均値を区間中央に置き，折れ線で結んだ．30日計画のDP73点は時間切れのため欠測とした．}
+    \label{fig:daily-operation}
+\end{figure}
+
+\begin{table}[htbp]
+    \centering
+    \caption{7月22日の最大買電と24時のSOC（LP）}
+    \begin{tabular}{lrr}
+        \toprule
+        最適化期間 & 当日の最大買電 [kW] & 当日24時のSOC [\%] \\
+        \midrule
+        1日    & 97.21        & 50.00          \\
+        7日    & 151.13       & 59.47          \\
+        30日   & 166.83       & 48.76          \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+
+% BEGIN R1016 THREE DAYS
+\clearpage
+\section{3日間の追加実験}
+2025年7月22～24日の3日間について，30分間隔（144区間）と60分間隔（72区間）で比較した．その他の条件は前回と同じとし，各手法4回，求解の打切り設定600秒で実行した．60分値は隣接する30分値2点の平均電力とし，総電力量を保存した．
+
+\begin{table}[htbp]
+    \centering
+    \caption{最適化期間3日の費用と処理時間（各手法4回）}
+    \label{tab:three-days}
+    \begin{tabular}{llrrr}
+        \toprule
+        時間間隔 & 手法 & 成功/4 & 費用平均値 [円] & 時間平均値 [秒] \\
+        \midrule
+        30分 & LP & 4 & 205,002 & 0.03 \\
+         & MILP & 4 & 205,002 & 0.18 \\
+         & DP-19 & 4 & 215,614 & 0.70 \\
+         & DP-37 & 4 & 208,815 & 5.88 \\
+         & DP-73 & 4 & 207,702 & 40.31 \\
+         & DP-145 & 1 & 206,091 & 447.64 \\
+        \midrule
+        60分 & LP & 4 & 204,886 & 0.03 \\
+         & MILP & 4 & 204,886 & 0.06 \\
+         & DP-19 & 4 & 209,958 & 0.74 \\
+         & DP-37 & 4 & 207,605 & 5.62 \\
+         & DP-73 & 4 & 206,449 & 40.83 \\
+         & DP-145 & 2 & 205,338 & 451.69 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+追加48件は43件成功，5件時間切れ，失敗0件であり，成功解はすべて独立評価に合格した．費用と時間は成功試行のみの平均値である．60分値との費用差には時間集約による問題条件の変化も含まれる．
+
+
+\clearpage
+\subsection{3日計画における1日の運用}
+3日計画の各条件1回目のLP解から，7月22日の運用を取り出した．両条件の初期SOCは50\%であり，終端SOCは7月25日0時に50\%とする．固定単価では同費用の運用が複数あり得るため，図は各条件の最適解の一例である．
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.90\textwidth]{../paper_method_comparison/figures/R1016_three_day_operation.png}
+    \caption{最適化期間3日の7月22日の運用（LP）．電力は各区間の平均値を区間中央に置き，折れ線で結んだ．充放電は外部側で充電を正，放電を負とした．}
+    \label{fig:three-day-operation}
+\end{figure}
+
+% END R1016 THREE DAYS
+
+\end{document}
+

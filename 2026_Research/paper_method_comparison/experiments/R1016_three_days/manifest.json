@@ -1,0 +1,32 @@
+{
+  "campaign": "R1016_three_days",
+  "planned_runs": 48,
+  "replicates": 4,
+  "time_limit_seconds": 600,
+  "execution": "sequential",
+  "cases": {
+    "three_days_30min": {
+      "config_sha256": "d86bd7b6f87adc8f2bc125c183c52a5a502ffa22303b3e87a98b5995b1b9f849",
+      "source_sha256": "155ad719f9309c566113d5635ca4cf1bd45596b5b09b87f5468fca6a9e04539e",
+      "input_sha256": "2285d4f08304f59ef7fbc53da01ce794bfc1eb21defa93efaaf2abd7e449d3d0",
+      "intervals": 144,
+      "time_step_hours": 0.5
+    },
+    "three_days_60min": {
+      "config_sha256": "ac954c2595c72f68b388d1971a1ba511533b8afd6df6d0e832c880cd1fce8227",
+      "source_sha256": "155ad719f9309c566113d5635ca4cf1bd45596b5b09b87f5468fca6a9e04539e",
+      "input_sha256": "e50bd1b434909f421d003521eca9e506d7812272aa22d9802c8bf2bf17726f29",
+      "intervals": 72,
+      "time_step_hours": 1.0
+    }
+  },
+  "code_sha256": {
+    "src/recompute_report_1008.py": "722bd0787d2a3698808336f69ab2652f3a596b700fe7a690726393c6cc81a5f4",
+    "src/run_experiments.py": "2b9ea5c13d280ffdb1a928b67f3cc54195e336f0765c59f64f5931588ceca585",
+    "src/check_run_setup.py": "328656d04e136b2905941fe6dda2e9f55dd19f6ce70317086332b340c984b907",
+    "src/solve_math_program.py": "161dee8d000e64f50259022cab9c58d748a9a9d1bdfacb621a57427b55f5fd16",
+    "src/solve_dp.py": "7deadaef58e36c98236c26795e46a57dc89a1c1a7384312ed0cffb763c291af8",
+    "src/evaluate_solution.py": "b8825dfa9cb4a56e7c298f6494680e4bbc73745f5187e4ca0bf12d28b0ebb1d5",
+    "src/run_report_1016_three_days.py": "6a1add8e48d5dae4c350ca11473ee147066e5e3ea0785b1b2e257411e2c1cc67"
+  }
+}

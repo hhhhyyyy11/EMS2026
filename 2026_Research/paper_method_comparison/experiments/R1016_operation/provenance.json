@@ -1,0 +1,23 @@
+[
+  {
+    "scenario": "period_day",
+    "run_id": "R1008-period_day-lp-r0",
+    "result_directory": "/Users/yzhy/Documents/大学関係/2026前期/EMS/2026_Research/paper_method_comparison/results/R1008_20261007T232304+0900_period_day_lp-r0",
+    "trajectory_sha256": "1e63d6117c12c0128617aeb47cece49ed315127b3956457a27471f92b2bb16fa",
+    "evaluation": "pass"
+  },
+  {
+    "scenario": "period_week",
+    "run_id": "R1008-period_week-lp-r0",
+    "result_directory": "/Users/yzhy/Documents/大学関係/2026前期/EMS/2026_Research/paper_method_comparison/results/R1008_20261007T232304+0900_period_week_lp-r0",
+    "trajectory_sha256": "f42b90cd82717d66de13d997a118dc0c3859114c9bf131459f47b2218c371c4b",
+    "evaluation": "pass"
+  },
+  {
+    "scenario": "period_month",
+    "run_id": "R1008-period_month-lp-r0",
+    "result_directory": "/Users/yzhy/Documents/大学関係/2026前期/EMS/2026_Research/paper_method_comparison/results/R1008_20261007T232304+0900_period_month_lp-r0",
+    "trajectory_sha256": "ba020af81b034dc974b1586f951c0834c865dfe107fadb788c02b7678310eebd",
+    "evaluation": "pass"
+  }
+]
